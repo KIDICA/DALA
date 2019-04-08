@@ -1,0 +1,8 @@
+module.exports = {
+  trainingKey: "",
+  predictionKey: "",
+  predictionResourceId: "",
+  sampleDataRoot: "",
+  projectId: "",
+  endPoint: "",
+};

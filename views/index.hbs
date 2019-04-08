@@ -1,0 +1,28 @@
+<form class="hidden" id="imageForm" method="post" enctype="multipart/form-data" action="/upload">
+  <input id="image" class="hidden" type="file" accept="image/jpeg,image/jpg,image/png;capture=camera">
+</form>
+
+<div class="slider glide glide--ltr glide--carousel glide--swipeable" id="intro">
+  <div class="slider__track glide__track" data-glide-el="track">
+    <ul id="slideContainer" class="slider__slides glide__slides" style="margin: 0">
+      {{#each images}}
+        <li class="glide__slide">
+          <img data-id="{{id}}" style="width: 100%; height: auto;" src="{{originalImageUri}}">
+          <ul class="hidden image-info">
+            {{#each tags}}
+              <li data-id="{{tagId}}">{{tagName}}</li>
+            {{/each}}
+          </ul>
+          </img>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+</div>
+
+<div class="overlay">
+  {{#each tags}}
+    <button class="btn btn-light btn-lg tag" data-id="{{id}}">{{name}}</button>
+  {{/each}}
+  <button id="btnImage" class="btn btn-primary btn-lg">Upload</button>
+</div>

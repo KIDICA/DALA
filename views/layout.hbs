@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+    <title>Cala</title>
+    <link rel="stylesheet" href="/modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/modules/@glidejs/glide/dist/css/glide.core.min.css">
+    <link rel="stylesheet" href="/modules/@glidejs/glide/dist/css/glide.theme.min.css">
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+  </head>
+  <body id="app">
+    <nav class="navbar bg-light pr-4 border-bottom border-dark">
+      <span class="navbar-brand h1">Cala</span>
+      <div class="btn-group float-right" role="group">
+        {{{counts}}}
+        <button type="button" class="btn btn-primary mr-1">Labeled (<span id="tagged"></span>)</button>
+        <button type="button" class="btn btn-secondary mr-1">Unlabeled (<span id="untagged"></span>)</button>
+      </div>
+    </nav>
+    <div class="container-fluid m-0 p-0">
+      <span id="guess" class="guess text-white">Guess: ...</span>
+      {{{body}}}
+    </div>
+    <script src="/modules/@glidejs/glide/dist/glide.min.js"></script>
+    <script src="/modules/axios/dist/axios.min.js"></script>
+    <script src="/modules/vue/dist/vue.min.js"></script>
+    <script src="/javascripts/main.js"></script>
+  </body>
+</html>
