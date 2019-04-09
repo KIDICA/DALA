@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const untagged = document.getElementById("untagged");
   const spinner = document.getElementById("spinner");
 
-  axios.get("/counts")
+  axios.get("/api/counts")
     .then(counts => {
       tagged.innerText = counts.data.tagged;
       untagged.innerText = counts.data.untagged;
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const formData = new FormData();
       formData.append('file', file);
 
-      axios.post("/upload", formData)
+      axios.post("/api/upload", formData)
         .then(response => {
           spinner.classList.add("hidden");
           resolve(response);
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function highlightTag() {
-    axios.get("/image/" + currentImageId())
+    axios.get("/api/image/" + currentImageId())
       .then(response => {
         response.data.forEach(image => {
           if (image.tags.length > 0) {
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function postTag(tagData) {
     console.info("POST", tagData);
-    axios.post("/", tagData)
+    axios.post("/api", tagData)
       .then(response => {
         console.log("tag-data", tagData);
         selectTag(tagData.tagId);

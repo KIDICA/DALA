@@ -4,39 +4,12 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const lessMiddleware = require("less-middleware");
 const logger = require("morgan");
-const AiApi = require("./api/azure");
+const apiMiddleware = require("./middleware/api");
 
 const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/users");
+const apiRouter = require("./routes/api");
 
 const app = express();
-
-// Async single threading is sexy...
-var loadedApi = false;
-var apiData = {};
-const api = new AiApi();
-
-function apiMiddleWare(req, res, next) {
-  console.log("api-middleware");
-  req.api = api;
-
-  if (!loadedApi) {
-    api.load()
-      .then(result => {
-        apiData = result;
-        req.apiData = result;
-        loadedApi = true;
-        next();
-      })
-      .catch(error => {
-        console.error(error);
-        next();
-      });
-  }
-
-  req.apiData = apiData;
-  next();
-}
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -50,9 +23,10 @@ app.use(lessMiddleware(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/modules", express.static(path.join(__dirname, "node_modules")));
 
-app.use(apiMiddleWare);
+app.use(apiMiddleware);
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/api", apiRouter);
+app.use("/users", apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -63,11 +37,11 @@ app.use(function (req, res, next) {
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
   res.status(err.status || 500);
-  res.render("error");
+  res.render('error');
 });
 
 module.exports = app;
