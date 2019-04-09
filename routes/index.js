@@ -1,21 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const AiApp = require("../ai");
-const multer = require('multer');
-const upload = multer({dest: 'uploads/'});
-const uuid = require('uuid');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const upload = multer({dest: "uploads/"});
 
-const handleError = (err, res) => {
+function handleError(error, res) {
   res
     .status(500)
-    .contentType("text/plain")
-    .end("Oops! Something went wrong!");
-};
-
-const aiApp = new AiApp();
-var loaded = false;
-var data = undefined;
-var uploadCount = 0;
+    .contentType("application/json")
+    .send({error});
+}
 
 /*
 aiApp.load()
@@ -42,16 +37,12 @@ aiApp.load()
 
  */
 
-router.get('/', async function (req, res, next) {
-  if (!loaded) {
-    data = await aiApp.load();
-    loaded = true;
-  }
-  res.render('index', {tags: data.tags, images: data.images});
+router.get("/", async function (req, res, next) {
+  res.render("index", {tags: req.apiData.tags, images: req.apiData.images});
 });
 
 router.get("/counts", function (req, res, next) {
-  aiApp.getLabelCounts()
+  req.api.getLabelCounts()
     .then(counts => {
       res.send(counts);
     });
@@ -60,7 +51,7 @@ router.get("/counts", function (req, res, next) {
 router.get("/image/:id", function (req, res, next) {
   const imageId = req.params.id;
 
-  aiApp.getImageById(imageId)
+  req.api.getImageById(imageId)
     .then(image => {
       res.send(image);
     })
@@ -69,38 +60,64 @@ router.get("/image/:id", function (req, res, next) {
 router.post("/", function (req, res, next) {
   const data = req.body;
   console.log("tag-image", data);
-  aiApp.tagImage(data)
+  req.api.tagImage(data)
     .then(response => {
       res.send(response);
     })
     .catch(error => console.log(error));
 });
 
-router.post("/upload", upload.single('file'), function (req, res, next) {
-  const tempPath = req.file.path;
-  const id = uuid.v1();
-  const ext = path.extname(req.file.originalname).toLowerCase();
-  const targetPath = path.join(__dirname, `./uploads/${id}.{ext}`);
+router.post("/upload", upload.single("file"), function (req, res, next) {
+  try {
+    const file = req.file;
+    const originFile = path.join(__dirname, "../uploads", file.filename);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const targetPath = path.join(__dirname, "../uploads", file.filename + ext);
 
-  if (ext === ".png" || ext === ".jpg") {
-    fs.rename(tempPath, targetPath, err => {
-      if (err) {
-        return handleError(err, res);
-      }
-      uploadCount += 1;
-      res.send({uploadCount});
-    });
-  } else {
-    fs.unlink(tempPath, err => {
-      if (err) {
-        return handleError(err, res);
-      }
+    if (ext === ".png" || ext === ".jpg") {
+      fs.rename(originFile, targetPath, err => {
+        if (err) {
+          return handleError(err, res);
+        }
 
-      res
-        .status(403)
-        .contentType("text/plain")
-        .end("Only .png files are allowed!");
-    });
+        fs.unlink(originFile, err => {
+          // Try delete, still raised, although succeeds.
+          //if (err) {
+          //return handleError(err, res);
+          //}
+
+          // Upload file and delete temp file
+          req.api.uploadFile({filepath: targetPath})
+            .then(result => {
+              counts.uploads += 1;
+              console.log("Upload-count", uploadCount);
+              fs.unlink(targetPath, function (err) {
+                if (err) {
+                  console.error(err);
+                }
+              });
+              res.send({uploadCount, result});
+            })
+            .catch(error => {
+              console.error(error);
+              handleError(error);
+            });
+        });
+      });
+    } else {
+      fs.unlink(file, err => {
+        if (err) {
+          return handleError(err, res);
+        }
+
+        res
+          .status(403)
+          .contentType("application/json")
+          .end("Only .png files are allowed!");
+      });
+    }
+  } catch (e) {
+    handleError(e.message, res);
   }
 });
 

@@ -11,9 +11,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const guess = document.getElementById("guess");
   const image = document.getElementById("image");
-  const bg = document.querySelector(".cover");
   const tagged = document.getElementById("tagged");
   const untagged = document.getElementById("untagged");
+  const spinner = document.getElementById("spinner");
 
   axios.get("/counts")
     .then(counts => {
@@ -37,20 +37,51 @@ document.addEventListener("DOMContentLoaded", function () {
     tagBtn.classList.remove("btn-light");
   }
 
+  /**
+   * @param {File} file
+   * @returns {Promise<{}>}
+   */
+  function uploadFile(file) {
+    return new Promise((resolve, reject) => {
+      spinner.classList.remove("hidden");
+      const formData = new FormData();
+      formData.append('file', file);
+
+      axios.post("/upload", formData)
+        .then(response => {
+          spinner.classList.add("hidden");
+          resolve(response);
+        })
+        .catch(error => {
+          console.error(error);
+          alert(error);
+          spinner.classList.add("hidden");
+        });
+    });
+  }
+
   image.addEventListener("change", function (event) {
     if (this.files.length > 0) {
       const file = this.files[0];
-      const reader = new FileReader();
-      reader.addEventListener("load", function () {
-        //preview.src = reader.result;
-        console.log(bg);
-        //bg.style.backgroundImage = `url("${reader.result}")`;
-      }, false);
-      reader.readAsDataURL(file);
+      //const reader = new FileReader();
+
+      uploadFile(file)
+        .then(response => {
+          console.log(response);
+        })
+        .catch(error => {
+          alert(error);
+        });
+      //reader.addEventListener("load", function () {
+      //preview.src = reader.result;
+      //console.log(bg);
+      //bg.style.backgroundImage = `url("${reader.result}")`;
+      //}, false);
+      //reader.readAsDataURL(file);
     }
   });
 
-  document.querySelector("#btnImage").addEventListener("click", function (event) {
+  document.querySelector("#btnUpload").addEventListener("click", function (event) {
     image.click();
   });
 

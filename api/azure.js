@@ -1,10 +1,10 @@
 const fs = require('fs');
 const util = require('util');
-const TrainingApi = require("azure-cognitiveservices-customvision-training");
-const PredictionApiClient = require("azure-cognitiveservices-customvision-prediction");
+const TrainingApi = require("azure-cognitiveservices-customvision-training/lib/trainingAPIClient");
+const PredictionApiClient = require("azure-cognitiveservices-customvision-prediction/lib/predictionAPIClient");
 const setTimeoutPromise = util.promisify(setTimeout);
 
-const config = require("./config");
+const config = require("../config");
 
 // API credentials
 const hemlockTag = "hemlock";
@@ -21,7 +21,7 @@ const predictor = new PredictionApiClient(config.predictionKey, config.endPoint)
  * @param {boolean} param.createTags
  * @returns {Promise<object>}
  */
-function AiApp() {
+function AiApi() {
   // Will be assigned once the promise is resolved.
   this.project = undefined;
 }
@@ -31,7 +31,7 @@ function AiApp() {
  * @param {string} image File name.
  * @returns {Promise<Promise<models.ImagePrediction>>}
  */
-AiApp.prototype.predict = function (image = "test_image.jpg") {
+AiApi.prototype.predict = function (image = "test_image.jpg") {
   return new Promise((resolve, reject) => {
     const testFile = fs.readFileSync(`${config.sampleDataRoot}/Test/${image}`);
 
@@ -45,7 +45,7 @@ AiApp.prototype.predict = function (image = "test_image.jpg") {
  * @param {string} imageUrl image location.
  * @returns {Promise<Promise<models.ImagePrediction>>}
  */
-AiApp.prototype.predictUrl = function (imageUrl) {
+AiApi.prototype.predictUrl = function (imageUrl) {
   return new Promise((resolve, reject) => {
     predictor.classifyImageWithNoStore(this.project.id, publishIterationName, imageUrl)
       .then(results => resolve(results));
@@ -56,7 +56,7 @@ AiApp.prototype.predictUrl = function (imageUrl) {
  * @param {string} url
  * @returns {Promise<any>}
  */
-AiApp.prototype.storeImageInProject = function (url) {
+AiApi.prototype.storeImageInProject = function (url) {
   return new Promise((resolve, reject) => {
     trainer.createImagesFromUrls(this.project.id, {images: [url]})
       .then(result => resolve(result));
@@ -68,7 +68,7 @@ AiApp.prototype.storeImageInProject = function (url) {
  * @param {string} url
  * @returns {Promise<any>}
  */
-AiApp.prototype.downloadImage = function (url) {
+AiApi.prototype.downloadImage = function (url) {
   return new Promise((resolve, reject) => {
 
   });
@@ -77,7 +77,7 @@ AiApp.prototype.downloadImage = function (url) {
 /**
  * @returns {Promise<{}>}
  */
-AiApp.prototype.getLabelCounts = function (id) {
+AiApi.prototype.getLabelCounts = function (id) {
   return new Promise((resolve, reject) => {
     trainer.getTaggedImageCount(id || this.project.id)
       .then(taggedCount => {
@@ -96,7 +96,7 @@ AiApp.prototype.getLabelCounts = function (id) {
  * @param {boolean} param.createTags Optionally creates the tags.
  * @returns {Promise<any>}
  */
-AiApp.prototype.load = function (param = {}) {
+AiApi.prototype.load = function (param = {}) {
   const that = this;
 
   return new Promise((resolve, reject) => {
@@ -157,11 +157,35 @@ AiApp.prototype.load = function (param = {}) {
  * @param id
  * @returns {Promise<any>}
  */
-AiApp.prototype.getImageById = function (id) {
+AiApi.prototype.getImageById = function (id) {
   return new Promise((resolve, reject) => {
     trainer.getImagesByIds(this.project.id, {imageIds: [id]})
       .then(result => resolve(result))
       .catch(reject);
+  });
+};
+
+/**
+ * @param {Object} param
+ * @param {String} param.filepath
+ * @param {String[]} [param.tags] Tag ids.
+ * @returns {Promise<any>}
+ */
+AiApi.prototype.uploadFile = function (param) {
+  return new Promise((resolve, reject) => {
+    console.log("upload-file", param);
+    fs.readFile(param.filepath, (err, data) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+      }
+      trainer.createImagesFromData(this.project.id, data, {tagIds: param.tags || []})
+        .then(result => resolve(result))
+        .catch(error => {
+          console.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -171,7 +195,7 @@ AiApp.prototype.getImageById = function (id) {
  * @param {string} tagId
  * @param {function} done
  */
-AiApp.prototype.uploadDir = function (dir, tagId) {
+AiApi.prototype.uploadDir = function (dir, tagId) {
   return new Promise((resolve, reject) => {
     const files = fs.readdirSync(dir);
     const lastIndex = files.length - 1;
@@ -204,7 +228,7 @@ AiApp.prototype.uploadDir = function (dir, tagId) {
  * @param {ImageTagCreateEntry} tagData
  * @returns {Promise<ImageTagCreateSummary>}
  */
-AiApp.prototype.tagImage = function (tagData) {
+AiApi.prototype.tagImage = function (tagData) {
   return new Promise((resolve, reject) => {
     trainer.deleteImageTags(this.project.id, [tagData.imageId], this.tagIds)
       .then(result => {
@@ -221,7 +245,7 @@ AiApp.prototype.tagImage = function (tagData) {
 /**
  * @returns {Promise<any>}
  */
-AiApp.prototype.removeTagsFromImages = function () {
+AiApi.prototype.removeTagsFromImages = function () {
   return new Promise((resolve, reject) => {
     trainer.deleteImageTags(this.project.id, this.imageIds, this.tagIds)
       .then(result => resolve(result));
@@ -233,7 +257,7 @@ AiApp.prototype.removeTagsFromImages = function () {
  * @param data
  * @returns {Promise<>}
  */
-AiApp.prototype.upload = function (dir, tag) {
+AiApi.prototype.upload = function (dir, tag) {
   return new Promise((resolve, reject) => {
     const hemlockDir = `${config.sampleDataRoot}/Hemlock`;
     const hemlockTagId = this.tags[hemlockTag].id;
@@ -254,7 +278,7 @@ AiApp.prototype.upload = function (dir, tag) {
 /**
  * @returns {Promise<Promise<models.Iteration>>}
  */
-AiApp.prototype.train = async function () {
+AiApi.prototype.train = async function () {
   return new Promise(async (resolve, reject) => {
     let trainingIteration = await trainer.trainProject(this.project.id);
 
@@ -280,7 +304,7 @@ AiApp.prototype.train = async function () {
  * @param data
  * @returns {Promise<any>}
  */
-AiApp.prototype.latestIteration = function (data) {
+AiApi.prototype.latestIteration = function (data) {
   return new Promise((resolve, reject) => {
     trainer.getIterations(this.project.id)
       .then(function (iterations) {
@@ -293,7 +317,7 @@ AiApp.prototype.latestIteration = function (data) {
   });
 };
 
-module.exports = AiApp;
+module.exports = AiApi;
 
 /*
 // First launch, upload and tag data + train
