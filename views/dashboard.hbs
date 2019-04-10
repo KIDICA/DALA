@@ -1,0 +1,72 @@
+<div id="dashboard"></div>
+<style>
+  .cover {
+    position: absolute;
+    top: 30%;
+    bottom: 30%;
+    left: 10%;
+    right: 10%;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 1000;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+</style>
+
+<script>
+  (function () {
+    var vm = undefined;
+
+    createVue({
+      el: '#dashboard',
+      template: `
+      <div>
+        <cala-meter ref="meter" labelLeft="Tag 1" labelRight="Tag 2"></cala-meter>
+        <div class="cover rounded bg-secondary shadow-sm" v-bind:style="{ 'background-image': 'url(' + cover + ')' }"></div>
+        <cala-upload url="/api/dashboard/upload" v-on:uploaded="done"></cala-upload>
+      </div>
+    `,
+      data: function () {
+        return {
+          cover: `/uploads/predict.jpg?fetch=${new Date().getTime()}`
+        };
+      },
+      methods: {
+        done: function (response) {
+          vm.cover = `/uploads/predict.jpg?fetch=${new Date().getTime()}`;
+          const p = response.data.predictions;
+          const p1 = p[0];
+          const p2 = p[1];
+
+          console.log(p1.probability, p2.probability, this.$refs);
+
+          this.$refs.meter.left = 40;
+          this.$refs.meter.right = 10;
+        }
+      },
+      mounted: function () {
+        this.$refs.meter.left = 20;
+        this.$refs.meter.right = 99;
+
+        const guess = document.getElementById("guess");
+        const spinner = document.getElementById("spinner");
+
+        const socket = io("http://localhost:4200");
+
+        socket.on('connect', function () {
+          console.log("socket-connected");
+        });
+
+        socket.on("count", function (data) {
+
+        });
+
+        socket.on('disconnect', function () {
+        });
+      }
+    }).then(instance => vm = instance);
+
+  }());
+</script>

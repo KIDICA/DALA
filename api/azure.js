@@ -3,6 +3,7 @@ const util = require('util');
 const TrainingApi = require("azure-cognitiveservices-customvision-training/lib/trainingAPIClient");
 const PredictionApiClient = require("azure-cognitiveservices-customvision-prediction/lib/predictionAPIClient");
 const setTimeoutPromise = util.promisify(setTimeout);
+const path = require("path");
 
 const config = require("../config");
 
@@ -27,13 +28,13 @@ function AiApi() {
 }
 
 /**
- * Test an image in the storage.
- * @param {string} image File name.
- * @returns {Promise<Promise<models.ImagePrediction>>}
+ * The path to the image relative to the root folder.
+ * @param {string} imagePath File name.
+ * @returns {Promise<ImagePrediction>}
  */
-AiApi.prototype.predict = function (image = "test_image.jpg") {
+AiApi.prototype.predict = function (imagePath) {
   return new Promise((resolve, reject) => {
-    const testFile = fs.readFileSync(`${config.sampleDataRoot}/Test/${image}`);
+    const testFile = fs.readFileSync(path.join(__dirname, "../", imagePath));
 
     predictor.classifyImageWithNoStore(this.project.id, publishIterationName, testFile)
       .then(results => resolve(results));

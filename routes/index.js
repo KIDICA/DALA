@@ -27,7 +27,17 @@ aiApp.load()
  */
 
 router.get("/", function (req, res, next) {
-  res.render("index", {tags: req.apiData.tags, images: req.apiData.images});
+  res.render("index", {
+    tags: req.apiData.tags,
+    images: req.apiData.images,
+    //language=HTML
+    toolbar: `
+      <div class="btn-group float-right" role="group">
+        <button type="button" class="btn btn-primary mr-1">Labeled (<span id="tagged"></span>)</button>
+        <button type="button" class="btn btn-secondary mr-1">Unlabeled (<span id="untagged"></span>)</button>
+      </div>
+    `
+  });
 });
 
 module.exports = router;

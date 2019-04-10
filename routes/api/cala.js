@@ -5,6 +5,11 @@ const path = require("path");
 const fs = require("fs");
 const upload = multer({dest: "uploads/"});
 
+function errorHandler(err, req, res, next) {
+  res.status(500);
+  res.render('error', {error: err});
+}
+
 router.get("/counts", function (req, res, next) {
   req.api.getLabelCounts()
     .then(counts => {
@@ -31,12 +36,17 @@ router.post("/", function (req, res, next) {
     .catch(error => console.log(error));
 });
 
+router.get("/predict", function (req, res, next) {
+
+});
+
+/** Submits the temp file to azure and then deletes it. */
 router.post("/upload", upload.single("file"), function (req, res, next) {
   try {
     const file = req.file;
-    const originFile = path.join(__dirname, "../uploads", file.filename);
+    const originFile = path.join(__dirname, "../../uploads", file.filename);
     const ext = path.extname(req.file.originalname).toLowerCase();
-    const targetPath = path.join(__dirname, "../uploads", file.filename + ext);
+    const targetPath = path.join(__dirname, "../../uploads", file.filename + ext);
 
     if (ext === ".png" || ext === ".jpg") {
       fs.rename(originFile, targetPath, err => {
@@ -64,14 +74,14 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
             })
             .catch(error => {
               console.error(error);
-              handleError(error);
+              errorHandler(error);
             });
         });
       });
     } else {
       fs.unlink(file, err => {
         if (err) {
-          return handleError(err, res);
+          return errorHandler(err, res);
         }
 
         res
@@ -81,7 +91,7 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
       });
     }
   } catch (e) {
-    handleError(e.message, res);
+    errorHandler(e.message, res);
   }
 });
 

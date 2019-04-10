@@ -7,30 +7,28 @@
     <link rel="stylesheet" href="/modules/@glidejs/glide/dist/css/glide.core.min.css">
     <link rel="stylesheet" href="/modules/@glidejs/glide/dist/css/glide.theme.min.css">
     <link rel='stylesheet' href='/stylesheets/style.css'/>
-  </head>
-  <body>
-    <div id="app">
-      <nav class="navbar bg-light pr-4 border-bottom border-dark shadow-sm">
-        <span class="navbar-brand h1">CALA</span>
-        <div class="btn-group float-right" role="group">
-          {{{counts}}}
-          <button type="button" class="btn btn-primary mr-1">Labeled (<span id="tagged"></span>)</button>
-          <button type="button" class="btn btn-secondary mr-1">Unlabeled (<span id="untagged"></span>)</button>
-        </div>
-      </nav>
-      <div class="container-fluid m-0 p-0">
-        <div id="spinner" class="spinner-grow spinner text-light hidden border-dark text-left" role="status">
-          <span class="sr-only">Loading...</span>
-        </div>
-        <div id="guess" class="hidden guess bg-light border-dark border shadow-sm rounded p-5">
-          Guess: ...
-        </div>
-        {{{body}}}
-      </div>
-    </div>
     <script src="/modules/@glidejs/glide/dist/glide.min.js"></script>
     <script src="/modules/axios/dist/axios.min.js"></script>
     <script src="/modules/vue/dist/vue.min.js"></script>
+    <script src="/modules/socket.io-client/dist/socket.io.js"></script>
+    <script src="/javascripts/components.js"></script>
     <script src="/javascripts/main.js"></script>
+  </head>
+  <body>
+    {{#unless skipNav}}
+      <nav class="navbar bg-light pr-4 shadow-sm">
+        <span class="navbar-brand h1">CALA</span>
+        {{{toolbar}}}
+      </nav>
+    {{/unless}}
+    <div class="container-fluid m-0 p-0">
+      <div id="spinner" class="spinner-grow spinner text-light hidden text-left" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+      <div id="guess" class="hidden guess bg-light border-dark border shadow-sm rounded p-5">
+        Guess: ...
+      </div>
+      {{{body}}}
+    </div>
   </body>
 </html>
