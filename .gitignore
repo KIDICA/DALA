@@ -84,7 +84,11 @@ typings/
 .dynamodb/
 
 .idea
+.vscode
 
 cognitive-services-node-sdk-samples
 
-config.js
+config.json
+public/**
+!public/uploads/empty
+frontend/src/assets/style/*.bootstrap.min.css

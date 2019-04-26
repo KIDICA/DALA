@@ -1,0 +1,67 @@
+enum ImageType { tagged, untagged }
+
+type Mutation {
+    tagImage(id: ID): TagInfo
+}
+
+type TagInfo {
+    tagId: ID
+    imageId: ID
+}
+
+type Query {
+    tagCounts: TagCounts
+    image(id: ID!): Image
+    images(type: ImageType, take: Int, skip: Int, tagId: ID): [Image]
+    tags: [Tag]
+    iterations: [Iteration]
+    predictUrl(url: String!): [Prediction],
+    predictFile(file: String!): [[Prediction]]
+    train: Training
+    predictions(file: String!): [Predictions]
+}
+
+type Predictions {
+    iterationId: ID
+    created: String
+    predictions: [Prediction]
+}
+
+type Training {
+    id: ID
+    name: String
+    status: String
+    created: String
+}
+
+type Prediction {
+    tag: Tag
+    probability: Float
+    created: String
+}
+
+type Image {
+    id: ID
+    created: String
+    imageUrl: String
+    thumbnailUrl: String
+    hasTags: Boolean
+    tags: [Tag]
+}
+
+type Tag {
+    id: ID
+    name: String
+}
+
+type TagCounts {
+    tagged: Int!
+    untagged: Int!
+}
+
+type Iteration {
+    id: ID
+    name: String
+    status: String
+    created: String
+}

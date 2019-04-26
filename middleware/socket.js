@@ -14,8 +14,12 @@ io.on('connection', socket => {
 
 server.listen(4200);
 
+module.exports = io;
+
+/*
 module.exports = function (req, res, next) {
   console.log("socket-middleware");
   res.io = io;
   next();
 };
+ */

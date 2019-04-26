@@ -1,28 +1,21 @@
-const AiApi = require("../api/azure");
+const ApiBuilder = require("../api/azure");
 
-// Async single threading is sexy...
-var loadedApi = false;
-var apiData = {};
-const api = new AiApi();
+var api = undefined;
 
 module.exports = function (req, res, next) {
-  console.log("api-middleware-loaded", loadedApi);
-  req.api = api;
-
-  if (!loadedApi) {
-    api.load()
-      .then(result => {
-        apiData = result;
-        req.apiData = result;
-        loadedApi = true;
+  if (!api) {
+    ApiBuilder.create()
+      .then(instance => {
+        api = instance;
+        req.api = instance;
         next();
       })
       .catch(error => {
         console.error(error);
         next();
       });
+  } else {
+    req.api = api;
+    next();
   }
-
-  req.apiData = apiData;
-  next();
 };

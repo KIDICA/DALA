@@ -6,25 +6,9 @@ const fs = require("fs");
 const upload = multer({dest: "uploads/"});
 
 function errorHandler(err, req, res, next) {
-  res.status(500);
-  res.render('error', {error: err});
+  console.error(err);
+  res.status(500).send({error: err});
 }
-
-router.get("/counts", function (req, res, next) {
-  req.api.getLabelCounts()
-    .then(counts => {
-      res.send(counts);
-    });
-});
-
-router.get("/image/:id", function (req, res, next) {
-  const imageId = req.params.id;
-
-  req.api.getImageById(imageId)
-    .then(image => {
-      res.send(image);
-    })
-});
 
 router.post("/", function (req, res, next) {
   const data = req.body;
@@ -36,8 +20,10 @@ router.post("/", function (req, res, next) {
     .catch(error => console.log(error));
 });
 
-router.get("/predict", function (req, res, next) {
-
+router.get("/predict/file", function (req, res, next) {
+  req.api.predict("/public/uploads/" + req.params.file)
+    .then(response => res.send(response))
+    .catch(error => errorHandler(error, req, res, next));
 });
 
 /** Submits the temp file to azure and then deletes it. */
@@ -63,17 +49,14 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
           // Upload file and delete temp file
           req.api.uploadFile({filepath: targetPath})
             .then(result => {
-              counts.uploads += 1;
-              console.log("Upload-count", uploadCount);
               fs.unlink(targetPath, function (err) {
                 if (err) {
                   console.error(err);
                 }
               });
-              res.send({uploadCount, result});
+              res.send({result});
             })
             .catch(error => {
-              console.error(error);
               errorHandler(error);
             });
         });
