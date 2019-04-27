@@ -1,7 +1,8 @@
 enum ImageType { tagged, untagged }
 
 type Mutation {
-    tagImage(id: ID): TagInfo
+    tagImage(id: ID!): TagInfo
+    deleteImage(id: ID!): Image
 }
 
 type TagInfo {
@@ -35,13 +36,13 @@ type Training {
 }
 
 type Prediction {
-    tag: Tag
-    probability: Float
+    tag: Tag!
+    probability: Float!
     created: String
 }
 
 type Image {
-    id: ID
+    id: ID!
     created: String
     imageUrl: String
     thumbnailUrl: String

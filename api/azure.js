@@ -81,7 +81,7 @@ AiApi.prototype.predict = function (file) {
 AiApi.prototype.predictUrl = function (imageUrl) {
   return new Promise((resolve, reject) => {
     console.debug("api-predictUrl", imageUrl);
-    predictor.classifyImageUrl(this.project.id, publishIterationName, imageUrl)
+    predictor.classifyImageUrlWithNoStore(this.project.id, publishIterationName, imageUrl)
       .then(results => resolve(results))
       .catch(error => reject(error));
   });
@@ -368,6 +368,34 @@ AiApi.prototype.train = async function (status) {
 };
 
 /**
+ * @param {string[]|string} imageIds
+ * @returns {Promise<void>}
+ */
+AiApi.prototype.deleteImages = function (imageIds) {
+  if (imageIds && !Array.isArray(imageIds)) {
+    imageIds = [imageIds];
+  }
+  return new Promise((resolve, reject) => {
+    trainer.deleteImages(this.project.id, imageIds)
+      .then(response => resolve(response))
+      .catch(error => reject(error))
+  });
+};
+
+/**
+ * @returns {Promise<number>}
+ */
+AiApi.prototype.getIterationCount = function () {
+  return new Promise((resolve, reject) => {
+    trainer.getIterations(this.project.id)
+      .then(r => {
+        return resolve(r.length);
+      })
+      .catch(error => reject(error));
+  });
+};
+
+/**
  * @param data
  * @returns {Promise<any>}
  */
@@ -377,7 +405,7 @@ AiApi.prototype.getIterations = function () {
       .then(r => {
         return resolve(r);
       })
-      .catch(reject);
+      .catch(error => reject(error));
   });
 };
 
@@ -390,6 +418,9 @@ AiApi.prototype.getPredictionHistory = function (file) {
   return new Promise(async (resolve, reject) => {
     this.getIterations()
       .then(its => {
+        if (its.length === 0) {
+          return reject("No iterations yet");
+        }
         const retainOrder = its.map(it => it.id);
         const results = new Array(its.length);
         let count = its.length;
@@ -405,10 +436,13 @@ AiApi.prototype.getPredictionHistory = function (file) {
                 if (count === 0) {
                   resolve(results);
                 }
-              }).catch(reject);
+              }).catch(error => reject(error));
           }, 250);
         });
-      });
+      }).catch(error => {
+      console.error(error);
+      reject(error);
+    });
   });
 };
 
