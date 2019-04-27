@@ -5,6 +5,13 @@
 <script>
   import Chartist from "chartist";
 
+  function randomData() {
+    return {
+      labels: new Array(5).fill(0).map((v, i) => "T-" + i),
+      series: new Array(6).fill(0).map((v, i) => new Array(5).fill(0).map((e, i) => Math.random() * 100)),
+    }
+  }
+
   export default {
     name: "cala-chart",
     data() {
@@ -14,6 +21,7 @@
     },
     watch: {
       data(val) {
+        console.log(val);
         this.data.series = val.series;
         this.data.labels = val.labels;
 
@@ -31,7 +39,12 @@
       initChart(param) {
         if (this.chart) {
           this.chart.detach();
+          clearInterval(this.thread);
         }
+        // Test random data
+        this.thread = setInterval(() => {
+          //this.chart.update(randomData())
+        }, 5000);
         this.chart = new Chartist.Line('.ct-chart', {
           labels: param.labels,
           series: param.series,
@@ -61,6 +74,7 @@
     destroyed() {
       if (this.chart) {
         this.chart.detach();
+        clearInterval(this.thread);
       }
     }
   }

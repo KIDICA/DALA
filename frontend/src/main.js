@@ -12,10 +12,12 @@ import Vuex from "vuex";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const base = window.location.origin.split(/:\d+/)[0];
+
 const urls = {
-  http: isProduction ? "" : "http://localhost:3000/",
-  graphql: isProduction ? "/graphql/v1" : "http://localhost:3000/graphql/v1",
-  socket: window.location.origin.split(/:\d+/)[0] + ":4200"
+  http: isProduction ? base : base + ":3000/",
+  graphql: isProduction ? "/graphql/v1" : base + ":3000/graphql/v1",
+  socket: base + ":4200"
 };
 
 const options = {
@@ -36,7 +38,7 @@ import App from "./App.vue";
 Vue.config.productionTip = false;
 
 // |========================================================|
-// | Global functions                                       |
+// | Global functions and variables.                        |
 // |========================================================|
 
 const http = axios.create({baseURL: urls.http});
@@ -49,10 +51,14 @@ const query = function (query) {
         query
       }
     }).then(response => resolve(response.data.data))
-      .catch(reject);
+      .catch(response => {
+        alert(`this.$query error:\n${JSON.stringify(response, null, 2)}`);
+        reject(response);
+      });
   });
 };
 
+Vue.prototype.$base = urls.http;
 Vue.prototype.$http = http;
 Vue.prototype.$query = query;
 Vue.prototype.$socket = io(urls.socket);

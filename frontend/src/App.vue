@@ -1,22 +1,29 @@
 <template>
-  <div id="app" class="bg-light">
+  <div id="app">
     <cala-nav title="CALA">
       <slot>
-        <div class="btn-group float-right p-1" role="group">
+        <div class="btn-group btn-group-sm float-right p-1" role="group">
           <router-link tag="button" class="btn btn-success" to="/glide/tagged">
-            <i class="fas fa-tags"></i> <span class="badge badge-dark ml-1">{{count.labeled}}</span>
+            <i class="fa fa-tags"></i> <span class="badge badge-dark ml-1">{{count.labeled}}</span>
           </router-link>
           <router-link tag="button" class="btn btn-danger" to="/glide/untagged">
-            <i class="fas fa-tags"></i> <span class="badge badge-dark ml-1">{{count.unlabeled}}</span>
+            <i class="fa fa-user-tag"></i> <span class="badge badge-dark ml-1">{{count.unlabeled}}</span>
           </router-link>
+          <!--
           <router-link tag="button" class="btn btn-secondary" to="/grid">
             <i class="fas fa-images"></i>
           </router-link>
-          <router-link tag="button" class="btn btn-info" to="/dashboard">
-            <i class="fas fa-brain"></i>
+          -->
+          <router-link tag="button" class="btn btn-info" to="/list">
+            <i class="fa fa-list"></i>
           </router-link>
-          <router-link tag="button" class="btn btn-primary" to="/capture">
-            <i class="fas fa-camera text-white"></i>
+
+          <router-link tag="button" class="btn btn-primary" to="/dashboard">
+            <i class="fa fa-chart-line"></i>
+          </router-link>
+
+          <router-link tag="button" class="btn btn-dark" to="/capture">
+            <i class="fas fa-camera"></i>
           </router-link>
         </div>
       </slot>
@@ -54,13 +61,10 @@
 
 <style>
   #app {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     width: 100%;
   }
 
   @import '~bootstrap/dist/css/bootstrap.min.css';
-  /*@import 'assets/style/minty.bootstrap.min.css';*/
 
   body {
     margin: 0;
@@ -75,10 +79,5 @@
   html, body {
     height: 100%;
     width: 100%
-  }
-
-  .nav .btn-group {
-    font-size: .9em;
-    width: 100%;
   }
 </style>

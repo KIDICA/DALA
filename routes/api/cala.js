@@ -30,10 +30,11 @@ router.get("/predict/file", function (req, res, next) {
 router.post("/upload", upload.single("file"), function (req, res, next) {
   try {
     const file = req.file;
+    console.debug(file);
     const originFile = path.join(__dirname, "../../uploads", file.filename);
     const ext = path.extname(req.file.originalname).toLowerCase();
     const targetPath = path.join(__dirname, "../../uploads", file.filename + ext);
-
+    console.debug(originFile, ext, targetPath);
     if (ext === ".png" || ext === ".jpg") {
       fs.rename(originFile, targetPath, err => {
         if (err) {
