@@ -1,7 +1,10 @@
 <template>
   <div>
     <cala-busy ref="busy"></cala-busy>
-    <button class="btn btn-primary shadow-sm btn-lg" @click="upload" v-html="caption"></button>
+
+    <button class="btn btn-primary" @click="upload">
+      <i class="fa fa-upload"></i> <span v-html="caption" class="ml-2"></span>
+    </button>
     <form style="display: none" id="imageForm" method="post" enctype="multipart/form-data" action="/upload">
       <input ref="inputFile" @change="submit" class="hidden" type="file" accept="image/jpeg,image/jpg,image/png;capture=camera">
     </form>

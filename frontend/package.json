@@ -15,6 +15,7 @@
     "bootstrap": "^4.3.1",
     "chartist": "^0.11.0",
     "core-js": "^2.6.5",
+    "dexie": "^2.0.4",
     "glider-js": "^1.6.5",
     "graphql-request": "^1.8.2",
     "socket.io-client": "^2.2.0",

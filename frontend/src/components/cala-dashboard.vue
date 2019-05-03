@@ -1,56 +1,54 @@
 <template>
-  <div>
+  <div class="m-2">
     <cala-busy ref="busy"></cala-busy>
 
-    <cala-meter v-bind:class="{hidden: busy}" ref="meter" v-bind:tags="tags"></cala-meter>
+    <div class="card">
+      <div class="card-header p-2">
+        <strong>Prediction</strong>
+      </div>
+      <div class="card-body p-3">
+        <div class="row">
+          <div class="col">
+            <cala-meter v-if="hasCover" v-bind:class="{hidden: busy}" ref="meter" v-bind:tags="tags"></cala-meter>
+          </div>
+        </div>
 
-    <div class="cover rounded bg-secondary shadow-sm m-3" v-bind:style="{ 'background-image': 'url(' + cover + ')' }">
+        <hr/>
+
+        <div class="row">
+          <div class="col">
+            <img style="height: 15em; width: auto;" class="img-thumbnail" v-bind:src="cover">
+          </div>
+        </div>
+
+        <div class="row mt-2">
+          <div class="col text-center">
+            <div class="btn-group" id="group">
+              <cala-upload url="/api/dashboard/upload" v-on:uploaded="done"></cala-upload>
+              <button @click="train" class="btn btn-success">Retrain</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row p-0 mt-2">
+            <cala-chart ref="chart" style="width: 95%"></cala-chart>
+        </div>
+
+      </div>
     </div>
-
-    <div class="btn-group" id="group">
-      <cala-upload url="/api/dashboard/upload" v-on:uploaded="done" @click="alert(1)"></cala-upload>
-      <button @click="train" class="btn btn-success btn-lg">Retrain</button>
-    </div>
-
-    <cala-chart ref="chart" style="
- pointer-events: none;
-    bottom: 0;
-    height:38%;
-    position: absolute;
-    top: 52%;
-    left: 1em;
-    right: 1em;"></cala-chart>
   </div>
 </template>
 
 <style>
   .cover {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: -1;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     height: 48%;
-    top: 0;
   }
 
   .hidden {
     display: none;
-  }
-
-  #group {
-    position: fixed;
-    width: 50%;
-    left: 0;
-    right: 0;
-    top: 50%;
-    opacity: 0.7;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
   }
 </style>
 
@@ -59,6 +57,15 @@
   import calaMeter from "./cala-meter";
   import calaBusy from "./cala-busy";
   import calaChart from "./cala-chart";
+
+  function imageExists(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
 
   export default {
     name: "cala-dashboard",
@@ -70,9 +77,10 @@
     },
     data: function () {
       return {
+        hasCover: false,
         busy: false,
         showMeter: false,
-        cover: `/uploads/predict.jpg?fetch=${new Date().getTime()}`
+        cover: ""
       };
     },
     computed: {
@@ -107,7 +115,9 @@
         });
       },
       predict() {
+        const cover = this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`;
         this.busy = true;
+        this.hasCover = true;
         this.$query(`
           {
             predictions(file: "predict.jpg") {
@@ -123,6 +133,11 @@
             }
           }`)
           .then(result => {
+            this.cover = cover;
+            if (result.predictions === null) {
+              this.busy = false;
+              return;
+            }
             this.showMeter = true;
             const tags = {};
 
@@ -150,15 +165,16 @@
             };
 
             this.busy = false;
-          });
+          }).catch(response => {
+          this.busy = false;
+        })
       },
       done: function () {
-        this.cover = `/uploads/predict.jpg?fetch=${new Date().getTime()}`;
         this.predict();
       },
 
       initSocket() {
-        this.$socket.on('connect', () => {
+        this.$socket.on("connect", () => {
           this.$log.debug("socket-connected");
         });
 
@@ -166,7 +182,7 @@
           this.$log.debug(data);
         });
 
-        this.$socket.on('disconnect', () => {
+        this.$socket.on("disconnect", () => {
         });
       },
     },

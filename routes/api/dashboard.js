@@ -15,7 +15,6 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
     const tempFile = req.file;
     const originFile = path.join(__dirname, "../../uploads", tempFile.filename);
     const ext = path.extname(req.file.originalname).toLowerCase();
-    fs.mkdirSync(__dirname + "../../public/uploads", {recursive: true});
     const targetPath = path.join(__dirname, "../../public/uploads", "predict" + ext);
 
     if (ext === ".png" || ext === ".jpg") {

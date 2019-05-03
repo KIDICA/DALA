@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom p-1 pl-3 pt-2 pr-3">
     <div class="navbar-brand" v-html="brand"></div>
     <slot></slot>
   </nav>
@@ -39,7 +39,7 @@
 
   .navbar-brand {
     font-family: Serif;
-    font-size: 2em;
+    font-size: 1.9em;
     margin: 0;
     padding: 0;
   }

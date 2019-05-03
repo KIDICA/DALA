@@ -17,8 +17,8 @@ const root = {
     return {
       id: image.id,
       created: image.created,
-      imageUrl: image.thumbnailUri,
-      thumbnailUrl: image.originalImageUri,
+      imageUrl: image.originalImageUri,
+      thumbnailUrl: image.thumbnailUri,
       tags: image.tags ? image.tags.map(tag => {
         return {id: tag.tagId, name: tag.tagName};
       }) : null
@@ -50,17 +50,17 @@ const root = {
           : await api.getUntaggedImages({take: args.take, skip: args.skip})
         // No type argument
         : (await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId}))
-          .concat(
-            await api.getUntaggedImages({take: args.take, skip: args.skip})
-          );
+        .concat(
+          await api.getUntaggedImages({take: args.take, skip: args.skip})
+        );
 
     return result.map(image => {
       return {
         hasTags: image.tags !== null,
         id: image.id,
         created: image.created,
-        imageUrl: image.thumbnailUri,
-        thumbnailUrl: image.originalImageUri,
+        imageUrl: image.originalImageUri,
+        thumbnailUrl: image.thumbnailUri,
         tags: image.tags ? image.tags.map(tag => {
           return {id: tag.tagId, name: tag.tagName};
         }) : null
@@ -106,23 +106,44 @@ const root = {
   },
 
   async predictions(args) {
-    const results = await api.getPredictionHistory(this.readUpload(args.file));
+    try {
+      const results = await api.getPredictionHistory(this.readUpload(args.file));
+      console.debug(results);
 
-    return results.map(result => {
+      return results.map(result => {
+        return {
+          iterationId: result.iteration,
+          created: result.created,
+          predictions: result.predictions.map(p => {
+            return {
+              probability: p.probability,
+              tag: {
+                id: p.tagId,
+                name: p.tagName
+              }
+            };
+          })
+        };
+      });
+    } catch (e) {
+      console.error(e);
+      throw new Error(e);
+    }
+  },
+
+  async deleteImage(args) {
+    try {
+      console.debug("delete:", args);
+      await api.deleteImages(args.id);
+
       return {
-        iterationId: result.iteration,
-        created: result.created,
-        predictions: result.predictions.map(p => {
-          return {
-            probability: p.probability,
-            tag: {
-              id: p.tagId,
-              name: p.tagName
-            }
-          };
-        })
+        image: {
+          id: args.id
+        }
       };
-    });
+    } catch (e) {
+      throw new Error(e);
+    }
   },
 
   async tags(args) {
@@ -134,17 +155,23 @@ const root = {
   },
 
   async predictUrl(url) {
-    const result = await api.predictUrl(url);
+    try {
+      const result = await api.predictUrl(url);
+      console.debug(result);
 
-    return result.predictions.map(p => {
-      return {
-        probability: p.probability,
-        tag: {
-          id: p.tagId,
-          name: p.tagName,
+      return result.predictions.map(p => {
+        return {
+          probability: p.probability,
+          tag: {
+            id: p.tagId,
+            name: p.tagName,
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.error(e);
+      throw new Error(e);
+    }
   }
 };
 

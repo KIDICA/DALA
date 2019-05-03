@@ -6,6 +6,7 @@ const lessMiddleware = require("less-middleware");
 const logger = require("morgan");
 const cors = require('cors');
 const timeout = require('connect-timeout');
+const fs = require('fs');
 
 const apiMiddleware = require("./middleware/api");
 
@@ -21,8 +22,12 @@ Running server, current environment: ${process.env.NODE_ENV}
 ============================================================
 `);
 
+if (!fs.existsSync("public/uploads")) {
+  fs.mkdirSync("public/uploads", {recursive: true});
+}
+
 // Don't place in module, must be only one instance.
-var socketClients = 0;
+let socketClients = 0;
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 

@@ -2,29 +2,48 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
 
-    <div ref="slideContainer" class="p-2 slider glide glide--ltr glide--carousel glide--swipeable">
-      <div class="slider__track glide__track" data-glide-el="track">
-        <ul class="slider__slides glide__slides" style="margin: 0">
-          <li class="glide__slide" v-for="image in images" :key="image.id">
-            <img class="img-thumbnail" v-bind:class="image.className" v-bind:data-id="image.id" v-bind:src="image.imageUrl">
-          </li>
-        </ul>
+    <h4 class="mt-2 ml-3 text-secondary text-center">
+      <span v-if="labeledView">Labeled Items</span>
+      <span v-else>Unlabeled Items</span>
+    </h4>
+    <hr/>
+
+    <div v-if="hasImages">
+      <div ref="slideContainer" class="slider glide glide--ltr glide--carousel glide--swipeable">
+        <div class="slider__track glide__track" data-glide-el="track">
+          <ul class="slider__slides glide__slides" style="margin: 0">
+            <li class="glide__slide" v-for="image in images" :key="image.id">
+              <img class="rounded bg-secondary" v-bind:class="image.className" v-bind:data-id="image.id" v-bind:src="image.lazyUrl">
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <div class="mx-auto text-center mt-5" style="width: 70%;">
+        <h4><i class="fa fa-battery-quarter"></i> Nothing there yet.</h4>
       </div>
     </div>
 
     <cala-overlay ref="overlay" v-bind:class="{'hidden' : busy}">
       <slot>
-        <div class="btn btn-group mb-1" ref="controls">
-          <button @click="tagImage(tag.id)" v-bind:class="{ 'btn-success animated heartBeat': tag.highlight, 'btn-secondary' : !tag.highlight }" class="btn btn-lg tag shadow-sm" v-bind:data-id="tag.id" :key="tag.id" v-for="tag in tags">
-            <i v-if="tag.highlight" class="fa fa-check"></i>
+        <div v-if="hasImages" class="btn btn-group mb-1" ref="controls">
+          <button @click="tagImage(tag.id)"
+                  v-bind:class="{ 'btn-success animated heartBeat': tag.highlight, 'btn-secondary' : !tag.highlight }"
+                  class="btn btn-lg tag shadow-sm" v-bind:data-id="tag.id" :key="tag.id"
+                  v-for="tag in tags">
             {{tag.name}}
           </button>
-          <button class="btn btn-lg btn-info animated heartBeat" v-if="guess">
-            Guess: {{guess}}
-            <i class="fa fa-brain"></i>
-          </button>
         </div>
-        <cala-upload url="/api/cala/upload" v-on:uploading="startUpload" v-on:uploaded="uploaded"></cala-upload>
+        <div class="btn-group btn-group-lg">
+          <div class="btn-group">
+            <button class="btn btn-lg btn-info animated heartBeat" v-if="guess">
+              Guess: {{guess}}
+              <i class="fa fa-brain"></i>
+            </button>
+            <cala-upload url="/api/cala/upload" v-on:uploading="startUpload" v-on:uploaded="uploaded"></cala-upload>
+          </div>
+        </div>
       </slot>
     </cala-overlay>
   </div>
@@ -55,6 +74,12 @@
       };
     },
     computed: {
+      hasImages: function () {
+        return this.images.length > 0;
+      },
+      labeledView() {
+        return this.$route.params.type === "tagged";
+      },
       tags: {
         get() {
           return this.$store.state.tags
@@ -86,7 +111,10 @@
         this.$log.debug(type);
       },
       isUntagged() {
-        return this.$route.params.type === "untagged"
+        return this.$route.params.type === "untagged";
+      },
+      isTagged() {
+        return this.$route.params.type === "tagged";
       },
       highlightTag() {
         if (this.isUntagged()) {
@@ -152,6 +180,9 @@
       currentImageId() {
         return this.images[this.glide.index].id;
       },
+      loadImage(index) {
+        this.images[index].lazyUrl = this.images[index].thumbnailUrl;
+      },
       /**
        * @param param.id {string} Tag UUID
        */
@@ -179,6 +210,9 @@
         }
       },
       predict() {
+        if (this.isTagged()) {
+          return;
+        }
         this.busy = true;
         this.$query(`
           {
@@ -190,9 +224,9 @@
             }
           }
           `).then(result => {
-          if (result.predictUrl.length > 0) {
+          if (result.predictUrl && result.predictUrl.length > 0) {
             const maxP = result.predictUrl.sort((a, b) => b.probability - a.probability)[0];
-            this.guess = `${maxP.tag.name} (${maxP.probability * 100}%)`;
+            this.guess = `${maxP.tag.name} (${(maxP.probability * 100).toFixed(2)}%)`;
           } else {
             this.guess = "none yet";
           }
@@ -213,17 +247,14 @@
           focusAt: 'center',
         });
 
-        this.glide.on("swipe.start", () => {
+        this.glide.on("swipe.end", () => {
           this.guess = undefined;
           this.busy = true;
           this.tags.forEach((tag, index) => this.tags[index].highlight = false);
-          if (this.isUntagged()) {
-            this.predict();
-          }
-        });
-
-        this.glide.on("swipe.end", () => {
+          this.predict();
           this.highlightTag();
+          // Load the next image lazily ahead of the next swipe.
+          this.loadImage((this.glide.index + 1) % this.images.length);
         });
 
         this.glide.on("mount.after", () => {
@@ -243,8 +274,15 @@
       `).then(response => {
           this.images = response.images.map(image => {
             image.className = "";
+            image.lazyUrl = "image/placeholder_1.png";
             return image;
           });
+          // Initially load only the left-center-right image.
+          this.loadImage(0);
+          if (this.images.length > 2) {
+            this.loadImage(1);
+            this.loadImage(this.images.length - 1);
+          }
           this.busy = false;
         });
       }
@@ -253,6 +291,7 @@
       this.load();
     },
     updated() {
+      // TODO: Refactor into something more sane
       if (this.initSlider) {
         if (this.glide) {
           this.glide.destroy();
