@@ -12,7 +12,7 @@
               </div>
             </div>
           </li>
-          <li v-else v-for="image in images" :key="image.id" class="animated slideInLeft m-0 mb-1 pb-2 p-1 border-top-0 border-left-0 border-right-0 list-group-item d-flex justify-content-between align-items-center">
+          <li v-else v-for="image in images" :key="image.id" class="animated rollIn m-0 mb-1 pb-2 p-1 border-top-0 border-left-0 border-right-0 list-group-item d-flex justify-content-between align-items-center">
             <div class="row">
 
               <div class="col">
@@ -90,7 +90,7 @@
       hasImages: function () {
         return this.images.length > 0;
       },
-      // ISSUE: Global intersection of tags variable on cala-live page, when
+      // TODO: ISSUE: Global intersection of "tags" variable values due to the same name on cala-live component, when
       // cala-dashboard and cala-imagelist are on the same page.
       allTags: {
         get() {
@@ -113,7 +113,7 @@
               id
             }
           }
-        `).then(response => {
+        `).then(() => {
           this.images = this.images.filter(_image => _image.id !== image.id);
         });
       },
@@ -132,6 +132,7 @@
             image.hasTags = image.tags !== null && image.tags.length > 0;
             return image;
           });
+          // TODO: Currently simulates stream of images, later imageBuffer is fed by a WebSocket from the server.
           this.thread = setInterval(() => {
             if (this.imageBuffer.length > 0) {
               this.images.unshift(this.imageBuffer.pop())

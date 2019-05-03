@@ -2,12 +2,18 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
 
+    <h4 class="mt-2 ml-3 text-secondary text-center">
+      <span v-if="labeledView">Labeled Items</span>
+      <span v-else>Unlabeled Items</span>
+    </h4>
+    <hr/>
+
     <div v-if="hasImages">
-      <div ref="slideContainer" class="p-2 slider glide glide--ltr glide--carousel glide--swipeable">
+      <div ref="slideContainer" class="slider glide glide--ltr glide--carousel glide--swipeable">
         <div class="slider__track glide__track" data-glide-el="track">
           <ul class="slider__slides glide__slides" style="margin: 0">
             <li class="glide__slide" v-for="image in images" :key="image.id">
-              <img class="img-thumbnail" v-bind:class="image.className" v-bind:data-id="image.id" v-bind:src="image.thumbnailUrl">
+              <img class="rounded bg-secondary" v-bind:class="image.className" v-bind:data-id="image.id" v-bind:src="image.lazyUrl">
             </li>
           </ul>
         </div>
@@ -71,6 +77,9 @@
       hasImages: function () {
         return this.images.length > 0;
       },
+      labeledView() {
+        return this.$route.params.type === "tagged";
+      },
       tags: {
         get() {
           return this.$store.state.tags
@@ -102,7 +111,10 @@
         this.$log.debug(type);
       },
       isUntagged() {
-        return this.$route.params.type === "untagged"
+        return this.$route.params.type === "untagged";
+      },
+      isTagged() {
+        return this.$route.params.type === "tagged";
       },
       highlightTag() {
         if (this.isUntagged()) {
@@ -168,6 +180,9 @@
       currentImageId() {
         return this.images[this.glide.index].id;
       },
+      loadImage(index) {
+        this.images[index].lazyUrl = this.images[index].thumbnailUrl;
+      },
       /**
        * @param param.id {string} Tag UUID
        */
@@ -195,6 +210,9 @@
         }
       },
       predict() {
+        if (this.isTagged()) {
+          return;
+        }
         this.busy = true;
         this.$query(`
           {
@@ -233,10 +251,10 @@
           this.guess = undefined;
           this.busy = true;
           this.tags.forEach((tag, index) => this.tags[index].highlight = false);
-          if (this.isUntagged()) {
-            this.predict();
-          }
+          this.predict();
           this.highlightTag();
+          // Load the next image lazily ahead of the next swipe.
+          this.loadImage((this.glide.index + 1) % this.images.length);
         });
 
         this.glide.on("mount.after", () => {
@@ -256,8 +274,15 @@
       `).then(response => {
           this.images = response.images.map(image => {
             image.className = "";
+            image.lazyUrl = "image/placeholder_1.png";
             return image;
           });
+          // Initially load only the left-center-right image.
+          this.loadImage(0);
+          if (this.images.length > 2) {
+            this.loadImage(1);
+            this.loadImage(this.images.length - 1);
+          }
           this.busy = false;
         });
       }
@@ -266,6 +291,7 @@
       this.load();
     },
     updated() {
+      // TODO: Refactor into something more sane
       if (this.initSlider) {
         if (this.glide) {
           this.glide.destroy();

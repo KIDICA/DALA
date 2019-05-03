@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom p-1 pl-3 pt-2 shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom p-1 pl-3 pt-2 pr-3">
     <div class="navbar-brand" v-html="brand"></div>
     <slot></slot>
   </nav>

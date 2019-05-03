@@ -50,11 +50,19 @@ const query = function (query) {
       data: {
         query
       }
-    }).then(response => resolve(response.data.data))
-      .catch(response => {
-        alert(`this.$query error:\n${JSON.stringify(response, null, 2)}`);
-        reject(response);
-      });
+    }).then(response => {
+      const data = response.data;
+      if (data.errors) {
+        const errors = data.errors
+          .map(error => error.message)
+          .join("\n");
+        reject(errors);
+      } else {
+        resolve(data.data);
+      }
+    }).catch(response => {
+      reject(response);
+    });
   });
 };
 

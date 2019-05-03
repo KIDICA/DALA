@@ -1,10 +1,10 @@
 <template>
-  <div class="row pr-4">
+  <div class="row p-1">
     <div class="col pr-0">
       <cala-imagelist v-bind:remove-button="false"></cala-imagelist>
     </div>
     <div class="col pl-0">
-      <cala-dashboard style="max-height: 100%;"></cala-dashboard>
+      <cala-dashboard style="min-height: 100%;"></cala-dashboard>
     </div>
   </div>
 </template>

@@ -4,8 +4,8 @@
   "private": true,
   "license": "Closed",
   "scripts": {
-    "dist": "cd frontend && npm install && npm run build && cd ..",
-    "start": "cross-env NODE_ENV=production npm run dist && node_modules/nodemon/bin/nodemon.js --exec node ./bin/www",
+    "dist": "cd ./frontend && npm install && npm run build && cd ..",
+    "start": "cross-env NODE_ENV=production npm run dist && cross-env NODE_ENV=production nodemon --exec node ./bin/www",
     "client": "cd frontend && npm install && cross-env NODE_ENV=development npm run serve",
     "server": "npm install && cross-env NODE_ENV=development nodemon --exec node ./bin/www"
   },

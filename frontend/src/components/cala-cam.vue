@@ -2,6 +2,10 @@
   <div class="text-center h-100">
     <cala-busy ref="busy"></cala-busy>
 
+    <div id="sidebar" class="bg-light">
+      <img @click="view(image)" v-for="image in snapshots" :key="image.id" v-bind:src="image.thumbnailUri" class="rounded animated bounceIn"/>
+    </div>
+
     <div class="alert alert-info" v-bind:class="{ 'hidden' : !notify, 'slideInDown animated' : notify }" style="position: absolute; top:0; z-index: 1000; opacity: 0.9; left:1em; right:1em;">
       {{message}}
     </div>
@@ -23,11 +27,13 @@
 </template>
 
 <script>
-  import CameraPhoto, { FACING_MODES, IMAGE_TYPES } from 'jslib-html5-camera-photo';
+  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
   import Overlay from "./cala-overlay";
   import Busy from "./cala-busy";
+  import clientDb from "../store/client";
 
   /**
+   * TODO: Move to static module and test.
    * @See https://stackoverflow.com/questions/12168909/blob-from-dataurl
    * @param dataURI
    * @returns {Blob}
@@ -72,10 +78,11 @@
         setTimeout(() => {
           this.notify = false;
         }, 2000);
-      }
+      },
     },
     data() {
       return {
+        snapshots: [],
         notify: false,
         message: "Saved!",
         busy: false,
@@ -83,6 +90,15 @@
       };
     },
     methods: {
+      view(image) {
+        alert(image.id);
+      },
+      storeSnapshot(value) {
+        clientDb.snapshots.add(value)
+          .then(() => {
+            this.snapshots.unshift(value);
+          });
+      },
       capture() {
         this.audio.play();
 
@@ -90,16 +106,22 @@
         const config = {
           sizeFactor: 1,
           imageType: IMAGE_TYPES.JPG,
-          imageCompression: .95,
+          imageCompression: 0.80,
           isImageMirror: false,
         };
 
         const dataUri = this.cameraPhoto.getDataUri(config);
         const blob = dataURItoBlob(dataUri);
         this.upload(blob)
-          .then(() => {
+          .then(response => {
+            const image = response.data.result;
+            image.created = Date.now();
+            this.storeSnapshot(image);
             this.busy = false;
             this.message = "Saved.";
+          })
+          .catch(error => {
+            this.$log.error(error);
           });
         // Display preview if necessary.
         // this.$refs.capture.src = dataUri;
@@ -111,6 +133,7 @@
 
           this.$http.post(this.resourceUrl, formData)
             .then(response => {
+              console.log(response);
               resolve(response);
             })
             .catch(error => {
@@ -119,6 +142,15 @@
             });
         });
       }
+    },
+    created() {
+      clientDb.snapshots
+        .orderBy("created").reverse()
+        .toArray()
+        .then(snapshots => {
+          this.snapshots = snapshots;
+          //snapshots.forEach(image => alert(JSON.stringify(image)));
+        });
     },
     mounted() {
       this.audio = new Audio("sound/camera.mp3");
@@ -132,11 +164,11 @@
     beforeRouteLeave(to, from, next) {
       this.cameraPhoto.stopCamera()
         .then(() => {
-          console.log('Camera stoped!');
+          this.$log.debug('Camera stoped!');
           next();
         })
         .catch((error) => {
-          console.log('No camera to stop!:', error);
+          this.$log.error('No camera to stop!:', error);
           next();
         });
     },
@@ -149,8 +181,28 @@
     right: 0;
     padding: 0;
     margin: 0;
-    position: absolute;
-    width: 100%;
+    position: fixed;
+    width: 85%;
+    height: 87%;
+  }
+
+  #sidebar {
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    width: 54px;
     height: 100%;
+    top: 0;
+    bottom: 0;
+    margin-top: 4em;
+    padding-left: 2px;
+    padding-right: 2px;
+    overflow-y: scroll;
+  }
+
+  #sidebar img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 2px;
   }
 </style>

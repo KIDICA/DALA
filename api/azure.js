@@ -36,11 +36,20 @@ function AiApi() {
  */
 AiApi.prototype.init = function (projectId) {
   return new Promise((resolve, reject) => {
-    trainer.getProject(projectId || config.projectId)
-      .then(project => {
-        this.project = project;
-        resolve(this);
-      })
+    const id = projectId || config.projectId;
+
+    Promise.all([
+      trainer.getProject(id),
+      trainer.getIterations(id)
+    ]).then(values => {
+      const project = values[0];
+      const iterations = values[1];
+
+      this.iterations = iterations; // May be empty if nothing trained yet.
+      this.project = project;
+
+      resolve(this);
+    })
       .catch(reject);
   });
 };
@@ -81,7 +90,9 @@ AiApi.prototype.predict = function (file) {
 AiApi.prototype.predictUrl = function (imageUrl) {
   return new Promise((resolve, reject) => {
     console.debug("api-predictUrl", imageUrl);
-    predictor.classifyImageUrlWithNoStore(this.project.id, publishIterationName, imageUrl)
+    // TODO: Ask mcrosoft whats the difference between quicktest and classify.
+    //predictor.classifyImageUrlWithNoStore(this.project.id, publishIterationName, imageUrl)
+    trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[0].id})
       .then(results => resolve(results))
       .catch(error => reject(error));
   });
@@ -173,7 +184,7 @@ AiApi.prototype.load = function (param = {take: 10, skip: 0, createTags: false})
 
     const tagLastIndex = createTags.length - 1;
     createTags.forEach((tag, index) => {
-      trainer.createTag(project.id, tag)
+      trainer.createTag(this.project.id, tag)
         .then(tag => {
           if (index === tagLastIndex) {
             complete();
@@ -236,9 +247,14 @@ AiApi.prototype.uploadFile = function (param) {
       if (err) {
         console.error(err);
         reject(err);
+        return;
       }
       trainer.createImagesFromData(this.project.id, data, {tagIds: param.tags || []})
-        .then(result => resolve(result))
+        .then(result => {
+          console.debug(result);
+          console.debug(result.images[0].image);
+          resolve(result.images[0].image)
+        })
         .catch(error => {
           console.error(error);
           reject(error);
@@ -315,6 +331,7 @@ AiApi.prototype.removeTagsFromImages = function () {
  * Upload files.
  * @param data
  * @returns {Promise<>}
+ * @deprecated
  */
 AiApi.prototype.upload = function (dir, tag) {
   return new Promise((resolve, reject) => {
@@ -335,7 +352,7 @@ AiApi.prototype.upload = function (dir, tag) {
 };
 
 /**
- * @param {function} status
+ * @param {function} status Callback for progress updates.
  * @returns {Promise<Promise<models.Iteration>>}
  */
 AiApi.prototype.train = async function (status) {
@@ -359,7 +376,12 @@ AiApi.prototype.train = async function (status) {
 
       // Publish the iteration to the end point
       trainer.publishIteration(this.project.id, trainingIteration.id, publishIterationName, config.predictionResourceId)
-        .then(r => resolve(trainingIteration))
+        .then(r => {
+          // Update iterations cache.
+          trainer.getIterations(this.project.id)
+            .then(its => this.iterations = its);
+          resolve(trainingIteration)
+        })
         .catch(reject);
     } catch (e) {
       reject(e.message);
@@ -452,7 +474,7 @@ AiApi.prototype.getPredictionHistory = function (file) {
 const AiBuilder = {
   /**
    * @param {string} [projectId] Either the project-id from the config.json will be used
-   * or one can be provided. This is useful for multi-project projects.
+   * or one can be provided. This is useful for multi-project apps.
    * @returns {Promise<AiApi>}
    */
   create: function (projectId) {

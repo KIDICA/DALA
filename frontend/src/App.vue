@@ -13,12 +13,13 @@
           <router-link tag="button" class="btn btn-secondary" to="/grid">
             <i class="fas fa-images"></i>
           </router-link>
-          -->
+
           <router-link tag="button" class="btn btn-info" to="/list">
             <i class="fa fa-list"></i>
           </router-link>
+          -->
 
-          <router-link tag="button" class="btn btn-primary" to="/dashboard">
+          <router-link tag="button" class="btn btn-primary" to="/live">
             <i class="fa fa-chart-line"></i>
           </router-link>
 
@@ -60,20 +61,11 @@
 </script>
 
 <style>
-  #app {
-    width: 100%;
-  }
-
   @import '~bootstrap/dist/css/bootstrap.min.css';
 
   body {
     margin: 0;
     padding: 4em 0 0;
-  }
-
-  .container-fluid {
-    height: 100%;
-    position: absolute;
   }
 
   html, body {
