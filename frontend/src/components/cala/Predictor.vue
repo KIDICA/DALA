@@ -24,7 +24,7 @@
         </div>
 
         <div class="row mt-2">
-          <template v-for="tag in tags">
+          <template v-for="tag in tags" :key="tag.id">
             <div class="col">
               <small class="text-uppercase">{{tag.name}}</small>
               <button :key="tag.id" class="btn btn-block btn-lg text-white" v-bind:class="tag.className">
@@ -35,7 +35,7 @@
         </div>
 
         <ul class="list-inline float-right mr-3" style="bottom: 0; position: absolute; right: 0;">
-          <li class="list-inline-item mr-5" v-for="tag in tags">
+          <li class="list-inline-item mr-5" v-for="tag in tags" :key="tag.id">
             <span class="badge p-2 legend mr-1" style="border-radius: 2em" v-bind:class="tag.className">&nbsp;</span>
             <span style="font-size: 1.3em;" class="font-weight-bolder">{{tag.name}}</span>
           </li>
@@ -84,7 +84,6 @@
         cover: this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`,
         busy: false,
         showMeter: false,
-        cover: "",
         predictions: [],
         chartHeight: "5em"
       };

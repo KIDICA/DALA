@@ -12,3 +12,4 @@ npm install
 cp ../cala.scss scss/cala.scss
 cp ../_variables.scss scss/_variables.scss
 npm run css
+cd ../../../../

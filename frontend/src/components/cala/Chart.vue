@@ -8,7 +8,7 @@
   function randomData() {
     return {
       labels: new Array(5).fill(0).map((v, i) => "T-" + i),
-      series: new Array(6).fill(0).map((v, i) => new Array(5).fill(0).map((e, i) => Math.random() * 100)),
+      series: new Array(6).fill(0).map(() => new Array(5).fill(0).map((e, i) => Math.random() * 100)),
     }
   }
 
