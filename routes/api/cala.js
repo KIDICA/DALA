@@ -49,13 +49,24 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
 
           // Upload file and delete temp file
           req.api.uploadFile({filepath: targetPath})
-            .then(result => {
+            .then(image => {
               fs.unlink(targetPath, function (err) {
                 if (err) {
                   console.error(err);
                 }
               });
-              res.send({result});
+
+              const response = {
+                id: image.id,
+                created: image.created,
+                imageUrl: image.originalImageUri,
+                thumbnailUrl: image.thumbnailUri,
+                tags: null
+              };
+
+              console.debug("upload-complete", response);
+
+              res.send(response);
             })
             .catch(error => {
               errorHandler(error);

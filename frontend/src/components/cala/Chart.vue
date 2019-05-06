@@ -21,7 +21,6 @@
     },
     watch: {
       data(val) {
-        console.log(val);
         this.data.series = val.series;
         this.data.labels = val.labels;
 
@@ -39,22 +38,38 @@
       initChart(param) {
         if (this.chart) {
           this.chart.detach();
-          clearInterval(this.thread);
         }
         // Test random data
-        this.thread = setInterval(() => {
-          //this.chart.update(randomData())
-        }, 5000);
-        this.chart = new Chartist.Line('.ct-chart', {
-          labels: param.labels,
-          series: param.series,
-        }, {
-          low: 0,
-          high: 100,
-          showArea: true,
-          showPoint: false,
-          fullWidth: true
-        });
+        this.chart = new Chartist.Line('.ct-chart',
+          {
+            labels: param.labels,
+            series: param.series,
+          },
+          {
+            width: "100%",
+            height: "100%",
+            low: 0,
+            high: 100,
+            axisY: {
+              showGrid: false,
+              showLabel: false,
+            },
+            axisX: {
+              showGrid: true,
+              showLabel: false,
+            },
+            showArea: true,
+            showPoint: true,
+            fullWidth: true,
+            lineSmooth: true,
+            chartPadding: {
+              top: 5,
+              right: 5,
+              bottom: -25,
+              left: -35
+            },
+          }
+        );
 
         this.chart.on('draw', function (data) {
           if (data.type === 'line' || data.type === 'area') {
@@ -74,29 +89,32 @@
     destroyed() {
       if (this.chart) {
         this.chart.detach();
-        clearInterval(this.thread);
       }
     }
   }
 </script>
 
 <style>
-  @import "~chartist/dist/chartist.min.css";
+  @import "../../../node_modules/chartist/dist/chartist.min.css";
 
   .ct-series-a .ct-line, .ct-series-a .ct-point {
-    stroke: green;
+    stroke: #8ca528;
   }
 
   .ct-series-a .ct-area {
-    fill: green;
+    fill: #8ca528;
   }
 
   .ct-series-b .ct-line,
   .ct-series-b .ct-point, .ct-series-b .ct-area {
-    stroke: dodgerblue;
+    stroke: #ae0055;
   }
 
   .ct-series-b .ct-area {
-    fill: dodgerblue;
+    fill: #ae0055;
+  }
+
+  .ct-area {
+    fill-opacity: 0.4;
   }
 </style>

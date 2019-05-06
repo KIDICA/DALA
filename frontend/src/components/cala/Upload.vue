@@ -2,7 +2,7 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
 
-    <button class="btn btn-primary" @click="upload">
+    <button class="btn btn-primary btn-lg" @click="upload">
       <i class="fa fa-upload"></i> <span v-html="caption" class="ml-2"></span>
     </button>
     <form style="display: none" id="imageForm" method="post" enctype="multipart/form-data" action="/upload">
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-  import cb from "./cala-busy";
+  import cb from "./Busy";
 
   export default {
     name: "cala-upload",

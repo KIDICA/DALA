@@ -15,7 +15,7 @@
 </template>
 
 <script>
-  import Overlay from "./cala-overlay";
+  import Overlay from "./Overlay";
 
   export default {
     name: "cala-image",

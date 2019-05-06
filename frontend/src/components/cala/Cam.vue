@@ -10,7 +10,7 @@
       {{message}}
     </div>
 
-    <video ref="cam" id="preview" autoplay="true"></video>
+    <video ref="cam" id="preview" autoplay="true" class="bg-light"></video>
 
     <cala-overlay>
       <button v-bind:disabled="busy" @click="capture" class="btn btn-success btn-lg">
@@ -27,10 +27,10 @@
 </template>
 
 <script>
-  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
-  import Overlay from "./cala-overlay";
-  import Busy from "./cala-busy";
-  import clientDb from "../store/client";
+  import CameraPhoto, { FACING_MODES, IMAGE_TYPES } from 'jslib-html5-camera-photo';
+  import Overlay from "./Overlay";
+  import Busy from "./Busy";
+  import clientDb from "../../store/client";
 
   /**
    * TODO: Move to static module and test.
@@ -133,7 +133,6 @@
 
           this.$http.post(this.resourceUrl, formData)
             .then(response => {
-              console.log(response);
               resolve(response);
             })
             .catch(error => {
@@ -183,25 +182,26 @@
     margin: 0;
     position: fixed;
     width: 85%;
-    height: 87%;
+    height: 90%;
   }
 
   #sidebar {
     position: fixed;
     z-index: 10;
     right: 0;
-    width: 54px;
+    width: 15%;
     height: 100%;
     top: 0;
     bottom: 0;
-    margin-top: 4em;
+    margin-top: 5.2em;
     padding-left: 2px;
     padding-right: 2px;
     overflow-y: scroll;
   }
 
   #sidebar img {
-    width: 50px;
+    padding: 2px;
+    width: 100%;
     height: 50px;
     margin-bottom: 2px;
   }

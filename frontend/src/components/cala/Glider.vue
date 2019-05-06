@@ -51,9 +51,9 @@
 
 <script>
   import Glide from '@glidejs/glide';
-  import cb from "./cala-busy";
-  import upload from "./cala-upload";
-  import overlay from "./cala-overlay";
+  import cb from "./Busy";
+  import upload from "./Upload";
+  import overlay from "./Overlay";
 
   export default {
     name: "cala-glider",
@@ -312,8 +312,8 @@
 </script>
 
 <style scoped>
-  @import '~@glidejs/glide/dist/css/glide.core.min.css';
-  @import "~animate.css/animate.min.css";
+  @import '../../../node_modules/@glidejs/glide/dist/css/glide.core.min.css';
+  @import "../../../node_modules/animate.css/animate.min.css";
 
   img {
     width: 100%;

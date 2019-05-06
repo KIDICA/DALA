@@ -1,7 +1,10 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom p-1 pl-3 pt-2 pr-3">
-    <div class="navbar-brand" v-html="brand"></div>
-    <slot></slot>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white p-0">
+    <div class="pt-1 pb-1 pl-2 pr-2">
+      <div class="navbar-brand mb-0" v-html="brand"></div>
+      <slot></slot>
+    </div>
+    <div class="gradient" id="line"></div>
   </nav>
 </template>
 
@@ -26,7 +29,17 @@
 </script>
 
 <style scoped>
+  .gradient {
+    background-image: linear-gradient(to right, #AE0055, #7C1344);
+  }
+
+  #line {
+    width: 100%;
+    height: 13px;
+  }
+
   .navbar {
+    color: #4A494A;
     display: table;
     width: 100%;
     z-index: 2;
@@ -38,8 +51,9 @@
   }
 
   .navbar-brand {
-    font-family: Serif;
-    font-size: 1.9em;
+    color: #4A494A;
+    font-family: Helvetica;
+    font-size: 1.3em;
     margin: 0;
     padding: 0;
   }

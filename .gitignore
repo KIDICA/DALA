@@ -91,4 +91,6 @@ cognitive-services-node-sdk-samples
 config.json
 public/**
 !public/uploads/empty
-frontend/src/assets/style/*.bootstrap.min.css
+
+.frontend/public/style/bootstrap/*
+!frontend/public/style/bootstrap/dist/css
