@@ -1,18 +1,25 @@
 import Router from 'vue-router';
-import Glider from "../components/cala-glider";
-import Dashboard from "../components/cala-dashboard";
-import Grid from "../components/cala-grid";
-import Cam from "../components/cala-cam";
-import Item from "../components/cala-item";
-import List from "../components/cala-imagelist";
-import Live from "../components/cala-live";
+import Glider from "../components/cala/Glider";
+import Predictor from "../components/cala/Predictor";
+import Grid from "../components/cala/Grid";
+import Cam from "../components/cala/Cam";
+import Item from "../components/cala/Item";
+import List from "../components/cala/ImageList";
+import Hub from "../components/cala/Hub";
+import Stack from "../components/cala/Stack";
 
 const router = new Router({
   routes: [
+    // Unlabeled image stack
+    {
+      path: '/',
+      component: Stack
+    },
+
     // Live viewer
     {
-      path: '/live',
-      component: Live
+      path: '/hub',
+      component: Hub
     },
 
     // List
@@ -31,10 +38,6 @@ const router = new Router({
 
     // Glider
     {
-      path: "/",
-      redirect: "/glide/untagged/10/0"
-    },
-    {
       path: "/glide/:type",
       redirect: "/glide/:type/10/0",
     },
@@ -49,8 +52,8 @@ const router = new Router({
       component: Grid,
     },
     {
-      path: '/dashboard',
-      component: Dashboard
+      path: '/predictor',
+      component: Predictor
     },
     {
       path: '/capture',

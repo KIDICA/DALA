@@ -20,7 +20,7 @@
 </template>
 
 <script>
-  import cb from "./cala-busy";
+  import cb from "./Busy";
 
   export default {
     name: "cala-grid",
