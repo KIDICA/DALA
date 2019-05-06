@@ -3,7 +3,9 @@
 echo ------------------------------------
 echo Building custom Bootstrap CSS
 echo ------------------------------------
-cd ./frontend/public/style/bootstrap
+cd ./frontend/public/style
+git clone https://github.com/twbs/bootstrap
+cd bootstrap
 git pull
 git checkout master
 git checkout tags/v4.3.1
