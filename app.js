@@ -4,9 +4,9 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const lessMiddleware = require("less-middleware");
 const logger = require("morgan");
-const cors = require('cors');
-const timeout = require('connect-timeout');
-const fs = require('fs');
+const cors = require("cors");
+const timeout = require("connect-timeout");
+const fs = require("fs");
 
 const apiMiddleware = require("./middleware/api");
 
@@ -22,23 +22,50 @@ Running server, current environment: ${process.env.NODE_ENV}
 ============================================================
 `);
 
+// |========================================================|
+// | Setup                                                  |
+// |========================================================|
+
 if (!fs.existsSync("public/uploads")) {
   fs.mkdirSync("public/uploads", {recursive: true});
 }
 
+// |========================================================|
+// | Socket message dispatch.                               |
+// |========================================================|
+
 // Don't place in module, must be only one instance.
 let socketClients = 0;
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const server = require("http").createServer(app);
+const io = require("socket.io")(server);
 
-io.on('connection', socket => {
-  console.log("socket-connected");
+io.on("connection", socket => {
+  console.debug("socket-connected");
   socketClients += 1;
-  socket.emit('clients', socketClients);
-  //io.emit('broadcast', /* … */); // emit an event to all connected sockets
-  //socket.on('reply', () => { /* … */
-  //});
+  socket.emit("clients", socketClients);
+
+  // All receive this message, including sender.
+  // Vuex centrally managed these counter in all apps.
+
+  socket.on("image-upload", image => {
+    socket.broadcast.emit("broadcast-image-upload", image);
+    socket.emit("broadcast-image-upload", image);
+  });
+
+  socket.on("tag-image", tag => {
+    socket.broadcast.emit("broadcast-image-tagged", tag);
+    socket.emit("broadcast-image-tagged", tag);
+  });
+
+  socket.on("image-delete", image => {
+    socket.broadcast.emit("broadcast-image-delete", image);
+    socket.emit("broadcast-image-delete", image);
+  });
 });
+
+// |========================================================|
+// | Express Setup                                          |
+// |========================================================|
 
 server.listen(4200);
 
@@ -48,7 +75,7 @@ function haltOnTimedout(req, res, next) {
   }
 }
 
-app.use(timeout('60m'));
+app.use(timeout("60m"));
 app.use(haltOnTimedout);
 app.use(logger("dev"));
 app.use(cors());
@@ -79,7 +106,7 @@ app.use(function (req, res, next) {
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
   res.status(err.status || 500);
