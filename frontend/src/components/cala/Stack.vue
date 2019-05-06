@@ -57,7 +57,6 @@
   import CameraPhoto, { FACING_MODES, IMAGE_TYPES } from 'jslib-html5-camera-photo';
   import imageHelper from "../../helper/image";
   import mathHelper from "../../helper/math";
-  import Webcam from "webcamjs";
 
   export default {
     name: "cala-stack",
