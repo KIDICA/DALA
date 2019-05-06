@@ -105,6 +105,10 @@ const root = {
     };
   },
 
+  hasIterations() {
+    return api.iterations.length > 0;
+  },
+
   async predictions(args) {
     try {
       const results = await api.getPredictionHistory(this.readUpload(args.file));
@@ -135,15 +139,15 @@ const root = {
     try {
       console.debug("delete:", args);
       await api.deleteImages(args.id);
-
-      return {
-        image: {
-          id: args.id
-        }
-      };
     } catch (e) {
       throw new Error(e);
     }
+  },
+
+  async tagImage(args) {
+    const result = await api.tagImage(args);
+    console.debug("tag-image", result);
+    return args;
   },
 
   async tags(args) {
