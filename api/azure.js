@@ -11,7 +11,15 @@ const config = require("../config.json");
 const hemlockTag = "hemlock";
 const cherryTag = "cherry";
 const createTags = [hemlockTag, cherryTag];
-const publishIterationName = "defaultClassify";
+const published = [];
+
+const publishName = () => {
+  const name = "IterationPub" + published.length;
+  published.push(name);
+  return name;
+};
+
+const lastPublish = () => published[published.length - 1];
 
 // Only one instance of API client required
 const trainer = new TrainingApi.TrainingAPIClient(config.trainingKey, config.endPoint);
@@ -42,14 +50,14 @@ AiApi.prototype.init = function (projectId) {
       trainer.getProject(id),
       trainer.getIterations(id)
     ]).then(values => {
-      const project = values[0];
-      const iterations = values[1];
+        const project = values[0];
+        const iterations = values[1];
 
-      this.iterations = iterations; // May be empty if nothing trained yet.
-      this.project = project;
+        this.iterations = iterations; // May be empty if nothing trained yet.
+        this.project = project;
 
-      resolve(this);
-    })
+        resolve(this);
+      })
       .catch(reject);
   });
 };
@@ -63,7 +71,7 @@ AiApi.prototype.init = function (projectId) {
 AiApi.prototype.predict = function (file) {
   return new Promise((resolve, reject) => {
     console.debug("api-predict");
-    predictor.classifyImageWithNoStore(this.project.id, publishIterationName, file)
+    predictor.classifyImageWithNoStore(this.project.id, lastPublish(), file)
       .then(results => resolve(results))
       .catch(error => reject(error));
   });
@@ -89,9 +97,13 @@ AiApi.prototype.predict = function (file) {
  */
 AiApi.prototype.predictUrl = function (imageUrl) {
   return new Promise((resolve, reject) => {
+    if (this.iterations.length === 0) {
+      reject("Nothing trained yet");
+      return;
+    }
     console.debug("api-predictUrl", imageUrl);
     // TODO: Ask mcrosoft whats the difference between quicktest and classify.
-    //predictor.classifyImageUrlWithNoStore(this.project.id, publishIterationName, imageUrl)
+    //predictor.classifyImageUrlWithNoStore(this.project.id, lastPublish(), imageUrl)
     trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[0].id})
       .then(results => resolve(results))
       .catch(error => reject(error));
@@ -150,11 +162,18 @@ AiApi.prototype.getUntaggedCount = function () {
   });
 };
 
+/**
+ * @param options
+ * @returns {Promise<Tag[]>}
+ */
 AiApi.prototype.getTags = function (options) {
   return new Promise((resolve, reject) => {
     trainer.getTags(this.project.id, options)
-      .then(resolve)
-      .catch(reject);
+      .then(tags => {
+        console.debug("get-tags", tags);
+        resolve(tags);
+      })
+      .catch(error => reject(error));
   });
 };
 
@@ -375,7 +394,7 @@ AiApi.prototype.train = async function (status) {
       await trainer.updateIteration(this.project.id, trainingIteration.id, trainingIteration);
 
       // Publish the iteration to the end point
-      trainer.publishIteration(this.project.id, trainingIteration.id, publishIterationName, config.predictionResourceId)
+      trainer.publishIteration(this.project.id, trainingIteration.id, publishName(), config.predictionResourceId)
         .then(r => {
           // Update iterations cache.
           trainer.getIterations(this.project.id)
