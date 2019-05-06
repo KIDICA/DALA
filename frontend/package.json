@@ -17,6 +17,7 @@
     "dexie": "^2.0.4",
     "glider-js": "^1.6.5",
     "graphql-request": "^1.8.2",
+    "jslib-html5-camera-photo": "^3.0.2-beta.0",
     "socket.io-client": "^2.2.0",
     "vue": "^2.6.10",
     "vue-router": "^3.0.3",
