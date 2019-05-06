@@ -14,7 +14,7 @@
 
     <cala-overlay>
       <button v-bind:disabled="busy" @click="capture" class="btn btn-success btn-lg">
-        <i class="fa fa-camera"></i> Capture
+        <font-awesome icon="camera"></font-awesome> Capture
       </button>
     </cala-overlay>
 

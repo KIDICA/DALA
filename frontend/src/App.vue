@@ -20,10 +20,10 @@
           </router-link>
           -->
           <router-link tag="button" class="btn btn-primary" to="/hub">
-            <i class="fa fa-chart-line"></i>
+            <font-awesome icon="chart-area"></font-awesome>
           </router-link>
           <router-link tag="button" class="btn btn-dark" to="/">
-            <i class="fas fa-camera"></i>
+            <font-awesome icon="camera"></font-awesome>
           </router-link>
         </div>
 
@@ -41,6 +41,7 @@
 
 <script>
   import cn from "./components/cala/Nav";
+  import "../src/assets/css/bootstrap/dist/css/bootstrap.min.css";
 
   export default {
     name: 'app',
@@ -64,8 +65,6 @@
 </script>
 
 <style>
-  @import "/style/bootstrap/dist/css/bootstrap.min.css";
-
   body {
     margin: 0;
     padding: 4em 0 0;

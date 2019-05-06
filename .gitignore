@@ -94,3 +94,4 @@ public/**
 
 .frontend/public/style/bootstrap/*
 !frontend/public/style/bootstrap/dist/css
+frontend/src/assets/css/bootstrap

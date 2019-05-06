@@ -94,8 +94,11 @@ app.use(function (req, res, next) {
 app.use("/graphql/v1", graphqlapi);
 app.use("/api/cala", apiCala);
 app.use("/api/dashboard", apiDashboard);
-// VueRouter will handle all routes.
-app.get(/.*/, (req, res) => res.sendFile(__dirname + "/public/index.html"));
+
+// Route handling. Only the upload folder is served statically.
+// All other static resource are compile by vue when they are included/required in components.
+app.get('/uploads/*', (req, res) => res.sendFile(__dirname + "/public" + req.url));
+app.get('*', (req, res) => res.sendFile(__dirname + "/public/index.html"));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

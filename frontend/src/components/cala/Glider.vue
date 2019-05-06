@@ -21,7 +21,7 @@
     </div>
     <div v-else>
       <div class="mx-auto text-center mt-5" style="width: 70%;">
-        <h4><i class="fa fa-battery-quarter"></i> Nothing there yet.</h4>
+        <h4><font-awesome icon="battery-quarter"></font-awesome> Nothing there yet.</h4>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
           <div class="btn-group">
             <button class="btn btn-lg btn-info animated heartBeat" v-if="guess">
               Guess: {{guess}}
-              <i class="fa fa-brain"></i>
+              <font-awesome icon="brain"></font-awesome>
             </button>
             <cala-upload url="/api/cala/upload" v-on:uploading="startUpload" v-on:uploaded="uploaded"></cala-upload>
           </div>

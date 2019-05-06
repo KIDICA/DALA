@@ -25,7 +25,7 @@
             </button>
 
             <button class="btn p-0" @click="unlabel(image)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
-              <i class="fa fa-times text-primary"></i>
+              <font-awesome icon="times" class="text-primary"></font-awesome>
               <br/>
               <small>Unlabel</small>
             </button>
@@ -47,7 +47,7 @@
             </button>
 
             <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em; font-size: 0.9em;">
-              <i class="fa fa-trash-alt text-primary"></i>
+              <font-awesome icon="trash" class="text-primary"></font-awesome>
               <br/>
               <small>Delete</small>
             </button>

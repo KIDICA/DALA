@@ -32,7 +32,7 @@
 
         <div class="col-2 p-0">
           <button class="btn cam mb-1" @click="capture" v-bind:disabled="busy">
-            <i class="fa fa-camera fa-2x text-white"></i>
+            <font-awesome icon="camera" class="fa-2x text-white"></font-awesome>
           </button>
         </div>
 

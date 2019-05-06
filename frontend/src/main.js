@@ -9,9 +9,17 @@ import network from "./helper/network";
 import store from "./store/state";
 import App from "./App.vue";
 
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { faChartArea, faBatteryQuarter, faCamera, faUpload, faBrain, faTrash, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
 // |========================================================|
 // | Application bootstrapping                              |
 // |========================================================|
+
+// Include them one by one to keep the binary small.
+library.add(faChartArea, faCamera, faUpload, faBrain, faTrash, faTimes, faBatteryQuarter);
+Vue.component("font-awesome", FontAwesomeIcon);
 
 const options = {
   isEnabled: true,
