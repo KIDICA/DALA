@@ -51,8 +51,8 @@ AiApi.prototype.init = function (projectId) {
       trainer.getIterations(id)
     ]).then(values => {
         const project = values[0];
-        const iterations = values[1];
-
+        // Order from old to new.
+        const iterations = values[1].sort((it1, it2) => it1.created - it2.created);
         this.iterations = iterations; // May be empty if nothing trained yet.
         this.project = project;
 
@@ -103,8 +103,8 @@ AiApi.prototype.predictUrl = function (imageUrl) {
     }
     console.debug("api-predictUrl", imageUrl);
     // TODO: Ask mcrosoft whats the difference between quicktest and classify.
-    //predictor.classifyImageUrlWithNoStore(this.project.id, lastPublish(), imageUrl)
-    trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[0].id})
+    predictor.classifyImageUrlWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].publishName, imageUrl)
+      //trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[0].id})
       .then(results => resolve(results))
       .catch(error => reject(error));
   });
@@ -462,20 +462,24 @@ AiApi.prototype.getPredictionHistory = function (file) {
         if (its.length === 0) {
           return reject("No iterations yet");
         }
+        // The promises can return out of order.
         const retainOrder = its.map(it => it.id);
-        const results = new Array(its.length);
+        const results = [];
         let count = its.length;
 
-        its.forEach(async (it, index) => {
+        its.forEach(it => {
           setTimeout(() => {
             // Prevents API blocking due to DoS
             trainer.quickTestImage(this.project.id, file, {iterationId: it.id})
-              .then(result => {
-                const correctIndex = retainOrder.indexOf(result.iteration);
-                results.splice(correctIndex, 0, result);
+              //predictor.classifyImageWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].publishName, file)
+              .then(prediction => {
+                const correctIndex = retainOrder.indexOf(prediction.iteration);
+                prediction.index = correctIndex;
+                results.push(prediction);
+
                 count -= 1;
                 if (count === 0) {
-                  resolve(results);
+                  resolve(results.sort((p1, p2) => p1.index - p2.index));
                 }
               }).catch(error => reject(error));
           }, 250);

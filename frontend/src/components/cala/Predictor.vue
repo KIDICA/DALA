@@ -24,14 +24,12 @@
         </div>
 
         <div class="row mt-2">
-          <template v-for="tag in tags" :key="tag.id">
-            <div class="col">
-              <small class="text-uppercase">{{tag.name}}</small>
-              <button :key="tag.id" class="btn btn-block btn-lg text-white" v-bind:class="tag.className">
-                {{tag.imageCount}}
-              </button>
-            </div>
-          </template>
+          <div class="col" v-for="tag in tags" :key="tag.id">
+            <small class="text-uppercase">{{tag.name}}</small>
+            <button :key="tag.id" class="btn btn-block btn-lg text-white" v-bind:class="tag.className">
+              {{tag.imageCount}}
+            </button>
+          </div>
         </div>
 
         <ul class="list-inline float-right mr-3" style="bottom: 0; position: absolute; right: 0;">
@@ -153,28 +151,21 @@
               this.busy = false;
               return;
             }
+            // Don't use the result.predictions directly, the Babel-compiler/WebPack/Whatnot
+            // I assume messes up the value and becomes undefined. Insanity.
+            const preds = result.predictions;
             this.cover = this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`;
 
             this.hasCover = true;
             this.showMeter = true;
-            // Group predictions by tag
-            const predictionsByTag = {};
-
-            const oldToNew = result.predictions.sort((p1, p2) => parseInt(p1.created) - parseInt(p2.created));
-            oldToNew.forEach(p => {
-              p.predictions.forEach(p => {
-                if (!predictionsByTag[p.tag.name]) {
-                  // Predictions start at 0 to show the progression better.
-                  predictionsByTag[p.tag.name] = [0];
-                }
-                predictionsByTag[p.tag.name].push(p.probability * 100);
-              });
-            });
 
             // We know based on the order of the tags in which they are
             // displayed and which graph belongs to which tag (and color).
             const series = [];
-            this.tags.forEach(tag => series.push(predictionsByTag[tag.name]));
+            this.tags.forEach(tag => {
+              const result = preds.map(p => p.predictions.filter(p2 => p2.tag.id === tag.id)[0].probability * 100);
+              series.push([0].concat(result));
+            });
 
             this.$refs.chart.data = {
               series: series,
@@ -186,6 +177,7 @@
             this.busy = false;
           })
           .catch(error => {
+            alert(error);
             this.busy = false;
           });
       },
