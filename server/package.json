@@ -7,7 +7,7 @@
     "dist": "cd ../client/ && npm install && npm run prebuild && npm run build",
     "production": "cross-env NODE_ENV=production PORT=443 nodemon --exec node ./bin/www",
     "quickstart": "cd ../client && npm run build && cd ../server && npm run production",
-    "start": "npm run dist && npm run production",
+    "start": "npm install && npm run dist && npm run production",
     "client": "cd ../client/ && npm install && cross-env NODE_ENV=development npm run serve",
     "server": "npm install && cross-env NODE_ENV=development PORT=3000 nodemon --exec node ./bin/www"
   },
@@ -22,7 +22,7 @@
     "express": "~4.16.0",
     "express-graphql": "^0.7.1",
     "graphql": "^14.2.1",
-    "http-errors": "~1.6.2",
+    "http-errors": "^1.6.3",
     "jslib-html5-camera-photo": "^3.0.2-beta.0",
     "less-middleware": "~2.2.1",
     "morgan": "~1.9.0",
