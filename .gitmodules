@@ -1,3 +1,0 @@
-[submodule "frontend/public/style/bootstrap"]
-	path = frontend/public/style/bootstrap
-	url = https://github.com/twbs/bootstrap.git

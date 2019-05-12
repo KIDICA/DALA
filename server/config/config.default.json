@@ -1,0 +1,12 @@
+{
+  "trainingKey": "",
+  "predictionKey": "",
+  "predictionResourceId": "",
+  "projectId": "",
+  "endPoint": "",
+  "ssl": {
+    "cert": "./config/ssl/cert.pem",
+    "key": "./config/ssl/key.pem"
+  },
+  "log": "./logs/[time]_server.log"
+}

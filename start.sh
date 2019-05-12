@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-sudo PORT=80 npm start
+cd server
+echo Starting Server in production mode with SSL connection.
+npm start

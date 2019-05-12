@@ -1,0 +1,2 @@
+Place ssl certificate in this folder and specify their file names in the config.json file, if differ from default.
+The `cert.sh` script will generate a self-signed certificate for testing. You could also use services like https://www.cert-depot.com

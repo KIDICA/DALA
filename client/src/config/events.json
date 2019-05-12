@@ -1,0 +1,17 @@
+{
+  "socket": {
+    "broadcast": {
+      "image": {
+        "remove": "broadcast-image-delete",
+        "upload": "broadcast-image-upload",
+        "tagged": "broadcast-image-tagged"
+      }
+    },
+    "image": {
+      "upload": "image-upload",
+      "tagged": "tag-image",
+      "remove": "image-delete"
+    },
+    "clientError": "client-error"
+  }
+}
