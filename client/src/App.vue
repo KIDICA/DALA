@@ -71,6 +71,10 @@
 </script>
 
 <style>
+  .gradient {
+    background-image: linear-gradient(to right, #AE0055, #7C1344);
+  }
+
   body {
     margin: 0;
     padding: 4em 0 0;

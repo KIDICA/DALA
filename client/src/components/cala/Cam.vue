@@ -10,11 +10,12 @@
       {{message}}
     </div>
 
-    <video ref="cam" id="preview" autoplay="true" class="bg-light"></video>
+    <video ref="cam" id="preview" class="bg-light" autoplay></video>
 
     <cala-overlay>
       <button v-bind:disabled="busy" @click="capture" class="btn btn-success btn-lg">
-        <font-awesome icon="camera"></font-awesome> Capture
+        <font-awesome icon="camera"></font-awesome>
+        Capture
       </button>
     </cala-overlay>
 
@@ -27,7 +28,7 @@
 </template>
 
 <script>
-  import CameraPhoto, { FACING_MODES, IMAGE_TYPES } from 'jslib-html5-camera-photo';
+  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
   import Overlay from "./Overlay";
   import Busy from "./Busy";
   import clientDb from "../../store/client";
@@ -112,11 +113,12 @@
 
         const dataUri = this.cameraPhoto.getDataUri(config);
         const blob = dataURItoBlob(dataUri);
+
         this.upload(blob)
           .then(response => {
             const image = response.data.result;
             image.created = Date.now();
-            this.storeSnapshot(image);
+            //this.storeSnapshot(image);
             this.busy = false;
             this.message = "Saved.";
           })
@@ -154,11 +156,11 @@
     mounted() {
       this.audio = new Audio("sound/camera.mp3");
       this.cameraPhoto = new CameraPhoto(this.$refs.cam);
-      this.cameraPhoto.startCameraMaxResolution(FACING_MODES.ENVIRONMENT)
-        .then((stream) => {/* ... */
-        })
-        .catch((error) => {/* ... */
-        });
+      this.cameraPhoto.startCameraMaxResolution(FACING_MODES.ENVIRONMENT);
+      //.then((stream) => {/* ... */
+      //})
+      //.catch((error) => {/* ... */
+      //});
     },
     beforeRouteLeave(to, from, next) {
       this.cameraPhoto.stopCamera()

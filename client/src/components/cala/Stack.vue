@@ -259,7 +259,7 @@
 
 <style scoped>
   img {
-    width: 60%;
+    width: 66%;
     height: auto;
     position: absolute;
     left: 0;

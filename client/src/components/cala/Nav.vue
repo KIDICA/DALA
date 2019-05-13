@@ -29,10 +29,6 @@
 </script>
 
 <style scoped>
-  .gradient {
-    background-image: linear-gradient(to right, #AE0055, #7C1344);
-  }
-
   #line {
     width: 100%;
     height: 13px;

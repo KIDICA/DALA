@@ -18,7 +18,8 @@ import {
   faUpload,
   faBrain,
   faTrash,
-  faTimes
+  faTimes,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
@@ -27,7 +28,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 // |========================================================|
 
 // Include them one by one to keep the binary small.
-library.add(faChartArea, faCamera, faUpload, faBrain, faTrash, faTimes, faBatteryQuarter);
+library.add(faChartArea, faCamera, faUpload, faBrain, faTrash, faTimes, faBatteryQuarter, faCheck);
 Vue.component("font-awesome", FontAwesomeIcon);
 
 const options = {

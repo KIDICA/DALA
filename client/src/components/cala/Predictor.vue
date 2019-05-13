@@ -127,7 +127,7 @@
           })
       },
       resizeChart() {
-        this.chartHeight = (document.body.clientHeight - this.$refs.image.clientHeight - 120) + "px";
+        this.chartHeight = (document.body.clientHeight - this.$refs.image.clientHeight - 180) + "px";
       },
       predict() {
         this.busy = true;
@@ -187,9 +187,7 @@
     },
     mounted: function () {
       this.predict();
-      window.onresize = () => {
-        this.resizeChart();
-      };
+      window.addEventListener('resize',this.resizeChart);
     }
   }
 </script>
