@@ -1,6 +1,5 @@
 import Vue from "vue";
-import VueRouter from "vue-router";
-import router from "./router";
+import router from "./route/router";
 import VueLogger from "vuejs-logger";
 import axios from "axios";
 import io from "socket.io-client";
@@ -42,7 +41,6 @@ const options = {
 };
 
 Vue.use(VueLogger, options);
-Vue.use(VueRouter);
 
 Vue.config.productionTip = false;
 

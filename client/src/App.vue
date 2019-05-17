@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <cala-nav title="CALA | Labeling">
+    <cala-nav title="CALA" ref="nav" v-bind:show-line="showLine">
       <slot>
         <div class="btn-group btn-group-sm float-right p-1" role="group">
           <!--
@@ -41,6 +41,7 @@
 <script>
   import cn from "./components/cala/Nav";
   import "../src/assets/css/bootstrap/dist/css/bootstrap.min.css";
+  import routes from "./route/routes";
 
   export default {
     name: 'app',
@@ -48,7 +49,10 @@
       "cala-nav": cn
     },
     data() {
-      return {}
+      return {
+        title: "CALA",
+        showLine: true,
+      }
     },
     computed: {
       count: {
@@ -58,6 +62,13 @@
         set(count) {
           this.$store.state.count = count;
         }
+      }
+    },
+    watch: {
+      $route(to) {
+        const route = routes.filter(router => router.path === to.path)[0];
+        this.$refs.nav.brand = route.title;
+        this.$refs.nav.showHeaderLine = route.drawHeaderLine;
       }
     },
     mounted() {

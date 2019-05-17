@@ -4,7 +4,7 @@
       <div class="navbar-brand mb-0" v-html="brand"></div>
       <slot></slot>
     </div>
-    <div class="gradient" id="line"></div>
+    <div class="gradient" id="line" v-if="showHeaderLine"></div>
   </nav>
 </template>
 
@@ -14,7 +14,8 @@
     props: {
       title: String,
       position: String,
-      bgClass: String
+      bgClass: String,
+      showLine: Boolean,
     },
     data() {
       return {
@@ -22,7 +23,8 @@
           bg: this.bgClass || "bg-light"
         },
         brand: this.title || "",
-        top: this.position === "top"
+        top: this.position === "top",
+        showHeaderLine: this.showLine,
       };
     },
   }
