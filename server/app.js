@@ -15,7 +15,6 @@ const apiMiddleware = require("./middleware/api");
 const graphQLAPI = require("./routes/api/v1/graphql");
 const apiCala = require("./routes/api/cala");
 const apiDashboard = require("./routes/api/dashboard");
-const events = require("../client/src/config/events.json");
 
 const app = express();
 
@@ -34,50 +33,8 @@ if (!fs.existsSync("public/uploads")) {
 }
 
 // |========================================================|
-// | Socket message dispatch.                               |
-// |========================================================|
-
-const event = require("../client/src/config/events.json");
-
-// Don't place in module, must be only one instance.
-let socketClients = 0;
-const server = require("http").createServer(app);
-const io = require("socket.io")(server);
-
-io.on("connection", socket => {
-  logger.debug("socket-connected");
-  socketClients += 1;
-  socket.emit("clients", socketClients);
-
-  // Allows debugging client issues by sending the to the server
-  // and writing them to the log file in production.
-  socket.on(events.socket.clientError, messages => {
-    logger.error({prefix: "client-error", message: messages});
-  });
-
-  // Vuex centrally manages these counters and are therefore broad-casted to all clients.
-  socket.on("image-upload", image => {
-    socket.broadcast.emit(event.socket.broadcast.image.upload, image);
-    // also back to sender
-    socket.emit(event.socket.broadcast.image.upload, image);
-  });
-
-  socket.on("tag-image", tag => {
-    socket.broadcast.emit(event.socket.broadcast.image.tagged, tag);
-    socket.emit(event.socket.broadcast.image.tagged, tag);
-  });
-
-  socket.on("image-delete", image => {
-    socket.broadcast.emit(event.socket.broadcast.image.remove, image);
-    socket.emit(event.socket.broadcast.image.remove, image);
-  });
-});
-
-// |========================================================|
 // | Express Setup                                          |
 // |========================================================|
-
-server.listen(4200);
 
 function haltOnTimeOut(req, res, next) {
   if (!req.timedout) {
@@ -96,10 +53,6 @@ app.use(lessMiddleware(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(apiMiddleware);
-app.use(function(req, res, next) {
-  res.io = io;
-  next();
-});
 
 app.use("/graphql/v1", graphQLAPI);
 // File uploads
