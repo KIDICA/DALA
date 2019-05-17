@@ -10,7 +10,7 @@
       {{message}}
     </div>
 
-    <video ref="cam" id="preview" class="bg-light" autoplay></video>
+    <video ref="cam" id="preview" class="bg-light" autoplay="true" playsInline></video>
 
     <cala-overlay>
       <button v-bind:disabled="busy" @click="capture" class="btn btn-success btn-lg">

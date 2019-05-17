@@ -15,7 +15,7 @@
           :key="image.id"/>
     </div>
 
-    <video v-show="showCamPreview" ref="cam" id="preview" autoplay="true" class="bg-light"></video>
+    <video v-show="showCamPreview" ref="cam" id="preview" class="bg-light" autoplay="true" playsInline></video>
 
     <div class="fixed-bottom w-100 bg-light pt-2 pl-1 pr-1 pb-1 text-center align-middle" v-if="tags.length>0">
       <div class="row">
@@ -78,7 +78,7 @@
       },
     },
     computed: {
-      hasImages: function () {
+      hasImages: function() {
         return this.images.length > 0;
       },
       topMostImage() {
@@ -101,10 +101,12 @@
         if (!this.camStarted) {
           this.cameraPhoto.startCameraMaxResolution(FACING_MODES.ENVIRONMENT)
             .then(stream => {
+              this.$log.debug("Camera started");
               this.camStarted = true;
               this.showCamPreview = true;
             })
             .catch(error => {
+              alert(error);
               this.$log.error(error);
             });
           return;
@@ -117,15 +119,12 @@
       startCapture() {
         this.busy = true;
 
-        const config = {
-          sizeFactor: 1,
-          imageType: IMAGE_TYPES.JPG,
-          imageCompression: 0.80,
-          isImageMirror: false,
-        };
+        const settings = this.cameraPhoto.getCameraSettings();
+        settings.imageType = IMAGE_TYPES.JPG;
+        settings.imageCompression = 0.80;
 
-        this.audio.play();
-        const dataUri = this.cameraPhoto.getDataUri(config);
+        //this.audio.play();
+        const dataUri = this.cameraPhoto.getDataUri(settings);
         const blob = imageHelper.dataURItoBlob(dataUri);
         this.upload(blob)
           .then(response => {
