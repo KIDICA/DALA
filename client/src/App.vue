@@ -66,12 +66,21 @@
     },
     watch: {
       $route(to) {
+        this.updateNav(to)
+      }
+    },
+    methods: {
+      /**
+       * @param {{path: String}} to
+       */
+      updateNav(to) {
         const route = routes.filter(router => router.path === to.path)[0];
         this.$refs.nav.brand = route.title;
-        this.$refs.nav.showHeaderLine = route.drawHeaderLine;
+        this.$refs.nav.showHeaderLine = route.showHeaderLine;
       }
     },
     mounted() {
+      this.updateNav(this.$route);
       // Everything on the page must be SSL requested.
       setTimeout(function() {
         // This hides the address bar:
