@@ -10,9 +10,27 @@ const PredictionApiClient = require("azure-cognitiveservices-customvision-predic
 
 // Only one instance of API client required, the argument for these functions
 // are anyways passed in stateless like HTTP requests.
-const trainer = new TrainingApi.TrainingAPIClient(config.trainingKey, config.endPoint);
-const predictor = new PredictionApiClient(config.predictionKey, config.endPoint);
+const tr = new TrainingApi.TrainingAPIClient(config.trainingKey, config.endPoint);
+const pred = new PredictionApiClient(config.predictionKey, config.endPoint);
+
+// Skeleton for an API queue handles the issue of API blocking due to heavy successive calls.
+// All queries will first be queue and executed after an certain interval.
+/** @type {[{type: String, callback: Function}]} Global management, this is not instance bound. */
+const apiQueue = [];
+const dequeueInterval = 200;
+
 const time = require("../utils/time");
+
+setInterval(() => {
+  if (apiQueue.length > 0) {
+    const call = apiQueue.shift();
+    if (call.type === "trainer") {
+      call.callback(tr);
+    } else {
+      call.callback(pred);
+    }
+  }
+}, dequeueInterval);
 
 /**
  * This a general API abstraction over whatever will communicate
@@ -29,6 +47,20 @@ function Azure() {
   this.iterations = [];
   /** @type {Number} The API allows a fixed number of training iterations. If we want to add new ones, we need to delete the old ones. */
   this.maxIterationCount = 10;
+}
+
+/**
+ * @param {Function} callback
+ */
+function invokeTrainer(callback) {
+  apiQueue.push({type: "trainer", callback});
+}
+
+/**
+ * @param {Function} callback
+ */
+function invoikePredictor(callback) {
+  apiQueue.push({type: "predictor", callback});
 }
 
 /**
@@ -57,20 +89,22 @@ Azure.prototype.init = function(projectId) {
   return new Promise((resolve, reject) => {
     const id = projectId || config.projectId;
 
-    Promise.all([
-      trainer.getProject(id),
-      trainer.getIterations(id)
-    ]).then(values => {
-      const project = values[0];
-      // Order from old to new.
-      const iterations = values[1].sort((it1, it2) => it1.created - it2.created);
-      this.iterations = iterations; // May be empty if nothing trained yet.
-      this.project = project;
+    invokeTrainer(trainer => {
+      Promise.all([
+        trainer.getProject(id),
+        trainer.getIterations(id)
+      ]).then(values => {
+        const project = values[0];
+        // Order from old to new.
+        const iterations = values[1].sort((it1, it2) => it1.created - it2.created);
+        this.iterations = iterations; // May be empty if nothing trained yet.
+        this.project = project;
 
-      resolve(this);
-    }).catch(error => {
-      logger.error(error);
-      reject(error)
+        resolve(this);
+      }).catch(error => {
+        logger.error(error);
+        reject(error)
+      });
     });
   });
 };
@@ -83,12 +117,14 @@ Azure.prototype.init = function(projectId) {
  */
 Azure.prototype.predict = function(file) {
   return new Promise((resolve, reject) => {
-    predictor.classifyImageWithNoStore(this.project.id, this.lastPublish(), file)
-      .then(results => resolve(results))
-      .catch(error => {
-        logger.error(error);
-        reject(error)
-      });
+    invoikePredictor(predictor => {
+      predictor.classifyImageWithNoStore(this.project.id, this.lastPublish(), file)
+        .then(results => resolve(results))
+        .catch(error => {
+          logger.error(error);
+          reject(error)
+        });
+    });
   });
 };
 
@@ -117,17 +153,19 @@ Azure.prototype.predictUrl = function(imageUrl) {
       return;
     }
 
-    // TODO: Ask MS whats the difference between quicktest and classify.
-    //predictor.classifyImageUrlWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, imageUrl)
-    trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
-      .then(results => {
-        logger.success({prefix: "azure", suffix: "(api-predictUrl)", message: imageUrl});
-        resolve(results)
-      })
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+    invokeTrainer(trainer => {
+      // TODO: Ask MS whats the difference between quicktest and classify.
+      //predictor.classifyImageUrlWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, imageUrl)
+      trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
+        .then(results => {
+          logger.success({prefix: "azure", suffix: "(api-predictUrl)", message: imageUrl});
+          resolve(results)
+        })
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -137,8 +175,11 @@ Azure.prototype.predictUrl = function(imageUrl) {
  */
 Azure.prototype.storeImageInProject = function(url) {
   return new Promise((resolve, reject) => {
-    trainer.createImagesFromUrls(this.project.id, {images: [url]})
-      .then(result => resolve(result));
+    invokeTrainer(trainer => {
+      trainer.createImagesFromUrls(this.project.id, {images: [url]})
+        .then(result => resolve(result))
+        .catch(error => reject(error));
+    });
   });
 };
 
@@ -148,14 +189,17 @@ Azure.prototype.storeImageInProject = function(url) {
  */
 Azure.prototype.getLabelCounts = function() {
   return new Promise((resolve, reject) => {
-    Promise.all([
-      trainer.getTaggedImageCount(this.project.id),
-      trainer.getUntaggedImageCount(this.project.id),
-    ]).then(values => resolve({tagged: values[0], untagged: values[1]}))
-      .catch(error => {
-        logger.error(error);
-        reject(error)
-      });
+
+    invokeTrainer(trainer => {
+      Promise.all([
+        trainer.getTaggedImageCount(this.project.id),
+        trainer.getUntaggedImageCount(this.project.id),
+      ]).then(values => resolve({tagged: values[0], untagged: values[1]}))
+        .catch(error => {
+          logger.error(error);
+          reject(error)
+        });
+    });
   });
 };
 
@@ -165,15 +209,17 @@ Azure.prototype.getLabelCounts = function() {
  */
 Azure.prototype.getTags = function(options) {
   return new Promise((resolve, reject) => {
-    trainer.getTags(this.project.id, options)
-      .then(tags => {
-        logger.success({prefix: "azure", message: tags});
-        resolve(tags);
-      })
-      .catch(error => {
-        logger.error(error);
-        reject(error)
-      });
+    invokeTrainer(trainer => {
+      trainer.getTags(this.project.id, options)
+        .then(tags => {
+          logger.success({prefix: "azure", message: tags});
+          resolve(tags);
+        })
+        .catch(error => {
+          logger.error(error);
+          reject(error)
+        });
+    });
   });
 };
 
@@ -186,14 +232,17 @@ Azure.prototype.getTags = function(options) {
  */
 Azure.prototype.load = function(param = {take: 10, skip: 0}) {
   return new Promise((resolve, reject) => {
-    Promise.all([
-      trainer.getTags(this.project.id),
-      trainer.getTaggedImages(this.project.id, {take: param.take, skip: param.skip}),
-    ]).then(values => {
-      resolve({tags: values[0], project: this.project, images: values[1]});
-    }).catch(error => {
-      logger.error(error);
-      reject(error)
+
+    invokeTrainer(trainer => {
+      Promise.all([
+        trainer.getTags(this.project.id),
+        trainer.getTaggedImages(this.project.id, {take: param.take, skip: param.skip}),
+      ]).then(values => {
+        resolve({tags: values[0], project: this.project, images: values[1]});
+      }).catch(error => {
+        logger.error(error);
+        reject(error)
+      });
     });
   });
 };
@@ -205,12 +254,14 @@ Azure.prototype.load = function(param = {take: 10, skip: 0}) {
  */
 Azure.prototype.getTaggedImages = function(param) {
   return new Promise((resolve, reject) => {
-    trainer.getTaggedImages(this.project.id, param)
-      .then(result => resolve(result))
-      .catch(error => {
-        logger.error(error);
-        reject(error)
-      });
+    invokeTrainer(trainer => {
+      trainer.getTaggedImages(this.project.id, param)
+        .then(result => resolve(result))
+        .catch(error => {
+          logger.error(error);
+          reject(error)
+        });
+    });
   });
 };
 
@@ -221,12 +272,14 @@ Azure.prototype.getTaggedImages = function(param) {
  */
 Azure.prototype.getUntaggedImages = function(param) {
   return new Promise((resolve, reject) => {
-    trainer.getUntaggedImages(this.project.id, param)
-      .then(result => resolve(result))
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+    invokeTrainer(trainer => {
+      trainer.getUntaggedImages(this.project.id, param)
+        .then(result => resolve(result))
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -237,9 +290,11 @@ Azure.prototype.getUntaggedImages = function(param) {
  */
 Azure.prototype.getImageById = function(id) {
   return new Promise((resolve, reject) => {
-    trainer.getImagesByIds(this.project.id, {imageIds: [id]})
-      .then(result => resolve(result)[0])
-      .catch(reject);
+    invokeTrainer(trainer => {
+      trainer.getImagesByIds(this.project.id, {imageIds: [id]})
+        .then(result => resolve(result)[0])
+        .catch(reject);
+    });
   });
 };
 
@@ -258,16 +313,18 @@ Azure.prototype.uploadFile = function(param) {
         reject(err);
         return;
       }
-      trainer.createImagesFromData(this.project.id, data, {tagIds: param.tags || []})
-        .then(result => {
-          logger.success({prefix: "azure", message: result, suffix: "(createImagesFromData)"});
-          logger.success({prefix: "azure", message: result.images[0].image, suffix: "createImagesFromData"});
-          resolve(result.images[0].image)
-        })
-        .catch(error => {
-          logger.error({prefix: "azure", message: error});
-          reject(error);
-        });
+      invokeTrainer(trainer => {
+        trainer.createImagesFromData(this.project.id, data, {tagIds: param.tags || []})
+          .then(result => {
+            logger.success({prefix: "azure", message: result, suffix: "(createImagesFromData)"});
+            logger.success({prefix: "azure", message: result.images[0].image, suffix: "createImagesFromData"});
+            resolve(result.images[0].image)
+          })
+          .catch(error => {
+            logger.error({prefix: "azure", message: error});
+            reject(error);
+          });
+      });
     });
   });
 };
@@ -285,7 +342,9 @@ Azure.prototype.uploadDir = function(dir, tagId) {
     files.forEach((file, index) => {
       setTimeout(async () => {
         try {
-          await trainer.createImagesFromData(this.project.id, fs.readFileSync(`${dir}/${file}`), {tagIds: [tagId]});
+          invokeTrainer(async trainer => {
+            await trainer.createImagesFromData(this.project.id, fs.readFileSync(`${dir}/${file}`), {tagIds: [tagId]});
+          });
         } catch (e) {
           logger.error(e.message);
         }
@@ -315,21 +374,24 @@ Azure.prototype.tagImage = function(tagData) {
       .then(tags => {
         const tagIds = tags.map(tag => tag.id);
         logger.success({suffix: "(delete-tags)", message: tagIds, prefix: "azure"});
-        trainer.deleteImageTags(this.project.id, [tagData.imageId], tagIds)
-          .then(result => {
-            trainer.createImageTags(this.project.id, {tags: [tagData]})
-              .then(taggingResult => {
-                resolve(taggingResult);
-              })
-              .catch(error => {
-                logger.error(error);
-                reject(error);
-              });
-          })
-          .catch(error => {
-            logger.error(error);
-            reject(error);
-          });
+
+        invokeTrainer(trainer => {
+          trainer.deleteImageTags(this.project.id, [tagData.imageId], tagIds)
+            .then(result => {
+              trainer.createImageTags(this.project.id, {tags: [tagData]})
+                .then(taggingResult => {
+                  resolve(taggingResult);
+                })
+                .catch(error => {
+                  logger.error(error);
+                  reject(error);
+                });
+            })
+            .catch(error => {
+              logger.error(error);
+              reject(error);
+            });
+        });
       });
   })
 };
@@ -339,8 +401,11 @@ Azure.prototype.tagImage = function(tagData) {
  */
 Azure.prototype.removeTagsFromImages = function() {
   return new Promise((resolve, reject) => {
-    trainer.deleteImageTags(this.project.id, this.imageIds, this.tagIds)
-      .then(result => resolve(result));
+    invokeTrainer(trainer => {
+      trainer.deleteImageTags(this.project.id, this.imageIds, this.tagIds)
+        .then(result => resolve(result))
+        .catch(error => reject(error));
+    });
   });
 };
 
@@ -353,17 +418,20 @@ Azure.prototype.removeTagsFromImages = function() {
 Azure.prototype.deleteIteration = function(it) {
   return new Promise((resolve, reject) => {
     logger.debug({suffix: "un-publish-iteration", prefix: "azure", message: it});
-    trainer.unpublishIteration(this.project.id, it.id)
-      .then(() => {
-        trainer.deleteIteration(this.project.id, it.id)
-          .then(() => {
-            resolve(it);
-          }).catch(error => {
-          logger.error(error);
-          reject(error);
-        });
-      }).catch(error => {
-      logger.error(error);
+
+    invokeTrainer(trainer => {
+      trainer.unpublishIteration(this.project.id, it.id)
+        .then(() => {
+          trainer.deleteIteration(this.project.id, it.id)
+            .then(() => {
+              resolve(it);
+            }).catch(error => {
+            logger.error(error);
+            reject(error);
+          });
+        }).catch(error => {
+        logger.error(error);
+      });
     });
   });
 };
@@ -410,47 +478,49 @@ Azure.prototype.train = async function(status) {
 Azure.prototype.startTraining = function(status) {
   return new Promise((resolve, reject) => {
 
-    trainer.trainProject(this.project.id)
-      .then(async trainingIteration => {
-        logger.debug("Training started...");
+    invokeTrainer(trainer => {
+      trainer.trainProject(this.project.id)
+        .then(async trainingIteration => {
+          logger.debug("Training started...");
 
-        // Only await block
-        while (trainingIteration.status === "Training") {
+          // Only await block
+          while (trainingIteration.status === "Training") {
+            logger.debug("Training status: " + trainingIteration.status);
+            // Block and wait until checking again.
+            await setTimeoutPromise(1500, null);
+            trainingIteration = await trainer.getIteration(this.project.id, trainingIteration.id)
+          }
+
+          if (typeof status === "function") {
+            status(trainingIteration);
+          }
+
           logger.debug("Training status: " + trainingIteration.status);
-          // Block and wait until checking again.
-          await setTimeoutPromise(1500, null);
-          trainingIteration = await trainer.getIteration(this.project.id, trainingIteration.id)
-        }
-
-        if (typeof status === "function") {
-          status(trainingIteration);
-        }
-
-        logger.debug("Training status: " + trainingIteration.status);
-        trainingIteration.isDefault = true;
-        trainer.updateIteration(this.project.id, trainingIteration.id, trainingIteration)
-          .then(() => {
-            const newName = this.createPublishName();
-            logger.debug("publishing iteration", newName);
-            trainer.publishIteration(this.project.id, trainingIteration.id, newName, config.predictionResourceId)
-              .then(it => {
-                this.iterations.push(it);
-                resolve(trainingIteration)
-              })
-              .catch(error => {
-                logger.error(error);
-                reject(error);
-              });
-          })
-          .catch(error => {
-            logger.error(error);
-            reject(error);
-          })
-      })
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+          trainingIteration.isDefault = true;
+          trainer.updateIteration(this.project.id, trainingIteration.id, trainingIteration)
+            .then(() => {
+              const newName = this.createPublishName();
+              logger.debug("publishing iteration", newName);
+              trainer.publishIteration(this.project.id, trainingIteration.id, newName, config.predictionResourceId)
+                .then(it => {
+                  this.iterations.push(it);
+                  resolve(trainingIteration)
+                })
+                .catch(error => {
+                  logger.error(error);
+                  reject(error);
+                });
+            })
+            .catch(error => {
+              logger.error(error);
+              reject(error);
+            })
+        })
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -464,12 +534,14 @@ Azure.prototype.deleteImages = function(imageIds) {
     imageIds = [imageIds];
   }
   return new Promise((resolve, reject) => {
-    trainer.deleteImages(this.project.id, imageIds)
-      .then(response => resolve(response))
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+    invokeTrainer(trainer => {
+      trainer.deleteImages(this.project.id, imageIds)
+        .then(response => resolve(response))
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -478,14 +550,16 @@ Azure.prototype.deleteImages = function(imageIds) {
  */
 Azure.prototype.getIterationCount = function() {
   return new Promise((resolve, reject) => {
-    trainer.getIterations(this.project.id)
-      .then(its => {
-        resolve(its.length);
-      })
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+    invokeTrainer(trainer => {
+      trainer.getIterations(this.project.id)
+        .then(its => {
+          resolve(its.length);
+        })
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -495,16 +569,18 @@ Azure.prototype.getIterationCount = function() {
  */
 Azure.prototype.getIterations = function() {
   return new Promise((resolve, reject) => {
-    trainer.getIterations(this.project.id)
-      .then(its => {
-        logger.debug("Iterations: ", its);
-        // old to new.
-        resolve(its.sort((it1, it2) => it1.created - it2.created));
-      })
-      .catch(error => {
-        logger.error(error);
-        reject(error);
-      });
+    invokeTrainer(trainer => {
+      trainer.getIterations(this.project.id)
+        .then(its => {
+          logger.debug("Iterations: ", its);
+          // old to new.
+          resolve(its.sort((it1, it2) => it1.created - it2.created));
+        })
+        .catch(error => {
+          logger.error(error);
+          reject(error);
+        });
+    });
   });
 };
 
@@ -527,7 +603,7 @@ Azure.prototype.getPredictionHistory = function(file) {
         let count = its.length;
 
         its.forEach(it => {
-          setTimeout(() => {
+          invokeTrainer(trainer => {
             // Prevents API blocking due to DoS
             trainer.quickTestImage(this.project.id, file, {iterationId: it.id})
             //predictor.classifyImageWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, file)
@@ -545,7 +621,7 @@ Azure.prototype.getPredictionHistory = function(file) {
                 logger.error(error);
                 reject(error);
               });
-          }, 250);
+          });
         });
       })
       .catch(error => {

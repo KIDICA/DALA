@@ -187,7 +187,7 @@
           .then(images => {
             // Don't spam the API.
             images.reverse()
-              .forEach(image => setTimeout(() => this.mapImage(image).then(this.pushImage)), 1000);
+              .forEach(image => this.mapImage(image).then(this.pushImage));
             this.loaded = true;
             this.busy = false;
           });
