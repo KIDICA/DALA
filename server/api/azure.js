@@ -59,7 +59,7 @@ function invokeTrainer(callback) {
 /**
  * @param {Function} callback
  */
-function invoikePredictor(callback) {
+function invoicePredictor(callback) {
   apiQueue.push({type: "predictor", callback});
 }
 
@@ -69,7 +69,7 @@ function invoikePredictor(callback) {
  * @returns {string}
  */
 Azure.prototype.createPublishName = function() {
-  const name = "IterationPub_" + time.now()
+  const name = "IterationPub_" + time.now();
   this.published.push(name);
   return name;
 };
@@ -117,7 +117,7 @@ Azure.prototype.init = function(projectId) {
  */
 Azure.prototype.predict = function(file) {
   return new Promise((resolve, reject) => {
-    invoikePredictor(predictor => {
+    invoicePredictor(predictor => {
       predictor.classifyImageWithNoStore(this.project.id, this.lastPublish(), file)
         .then(results => resolve(results))
         .catch(error => {
@@ -429,9 +429,7 @@ Azure.prototype.deleteIteration = function(it) {
             logger.error(error);
             reject(error);
           });
-        }).catch(error => {
-        logger.error(error);
-      });
+        });
     });
   });
 };
@@ -447,16 +445,13 @@ Azure.prototype.train = async function(status) {
         .then(its => {
           const exceededIterations = its.length >= this.maxIterationCount;
           if (exceededIterations) {
-            logger.debug(`Maxiumum number of iterations exceeded ${its.length}/${this.maxIterationCount}`);
-            // Delete the last three iterations, otherwise we need to un-publish all the time.
-            for (let i = 0; i < 3; i++) {
-              this.deleteIteration(its[i])
-                .then(() => {
-                  this.startTraining(status)
-                    .then(iteration => resolve(iteration))
-                    .catch(error => reject(error));
-                });
-            }
+            logger.debug(`Maximum number of iterations exceeded ${its.length}/${this.maxIterationCount}`);
+            this.deleteIteration(its[0])
+              .then(() => {
+                this.startTraining(status)
+                  .then(iteration => resolve(iteration))
+                  .catch(error => reject(error))
+              }).catch(error => reject(error));
           } else {
             this.startTraining(status)
               .then(iteration => resolve(iteration))
@@ -497,6 +492,7 @@ Azure.prototype.startTraining = function(status) {
 
           logger.debug("Training status: " + trainingIteration.status);
           trainingIteration.isDefault = true;
+          logger.debug("Training-iteration: ", trainingIteration);
           trainer.updateIteration(this.project.id, trainingIteration.id, trainingIteration)
             .then(() => {
               const newName = this.createPublishName();

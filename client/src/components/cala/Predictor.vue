@@ -76,7 +76,7 @@
       "cala-busy": Budy,
       "cala-chart": Chart
     },
-    data: function () {
+    data: function() {
       return {
         hasCover: true,
         cover: this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`,
@@ -115,16 +115,16 @@
         this.$query(`{
         train {id}
           iterations {id, name, status, created}
-        }`).then(result => {
+        }`)
+          .then(result => {
             this.$log.debug(result);
-            setTimeout(() => {
-              this.predict();
-            }, 1000);
+            this.predict();
+            this.busy = false;
           })
           .catch(error => {
             alert(error);
             this.busy = false;
-          })
+          });
       },
       resizeChart() {
         this.chartHeight = (document.body.clientHeight - this.$refs.image.clientHeight - 180) + "px";
@@ -185,9 +185,9 @@
         this.predict();
       }
     },
-    mounted: function () {
+    mounted: function() {
       this.predict();
-      window.addEventListener('resize',this.resizeChart);
+      window.addEventListener('resize', this.resizeChart);
     }
   }
 </script>
