@@ -61,8 +61,9 @@ Vue.config.errorHandler = function(err) {
 
 const error = window.console.error;
 window.console.error = function(...args) {
+  alert(args);
+  socket.emit(events.socket.clientError, args);
   error.apply(this, args);
-  socket.emit.apply(undefined, [events.socket.clientError, args])
 };
 
 // |================================================================|

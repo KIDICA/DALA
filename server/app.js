@@ -15,6 +15,7 @@ const apiMiddleware = require("./middleware/api");
 const graphQLAPI = require("./routes/api/v1/graphql");
 const apiCala = require("./routes/api/cala");
 const apiDashboard = require("./routes/api/dashboard");
+const events = require("../client/src/config/events.json");
 
 const app = express();
 
@@ -36,7 +37,7 @@ if (!fs.existsSync("public/uploads")) {
 // | Socket message dispatch.                               |
 // |========================================================|
 
-const events = require("../client/src/config/events.json");
+const event = require("../client/src/config/events.json");
 
 // Don't place in module, must be only one instance.
 let socketClients = 0;
@@ -48,25 +49,27 @@ io.on("connection", socket => {
   socketClients += 1;
   socket.emit("clients", socketClients);
 
-  // All receive this message, including sender.
-  // Vuex centrally managed these counter in all apps.
+  // Allows debugging client issues by sending the to the server
+  // and writing them to the log file in production.
   socket.on(events.socket.clientError, messages => {
     logger.error({prefix: "client-error", message: messages});
   });
 
+  // Vuex centrally manages these counters and are therefore broad-casted to all clients.
   socket.on("image-upload", image => {
-    socket.broadcast.emit("broadcast-image-upload", image);
-    socket.emit("broadcast-image-upload", image);
+    socket.broadcast.emit(event.socket.broadcast.image.upload, image);
+    // also back to sender
+    socket.emit(event.socket.broadcast.image.upload, image);
   });
 
   socket.on("tag-image", tag => {
-    socket.broadcast.emit("broadcast-image-tagged", tag);
-    socket.emit("broadcast-image-tagged", tag);
+    socket.broadcast.emit(event.socket.broadcast.image.tagged, tag);
+    socket.emit(event.socket.broadcast.image.tagged, tag);
   });
 
   socket.on("image-delete", image => {
-    socket.broadcast.emit("broadcast-image-delete", image);
-    socket.emit("broadcast-image-delete", image);
+    socket.broadcast.emit(event.socket.broadcast.image.remove, image);
+    socket.emit(event.socket.broadcast.image.remove, image);
   });
 });
 
