@@ -1,10 +1,10 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-white p-0">
     <div class="pt-1 pb-1 pl-2 pr-2">
-      <div class="navbar-brand mb-0" v-html="brand"></div>
+      <div class="navbar-brand mb-0" v-html="param.title" v-if="param.showTitle"></div>
       <slot></slot>
     </div>
-    <div class="gradient" id="line" v-if="showHeaderLine"></div>
+    <div class="gradient" id="line" v-if="param.showLine"></div>
   </nav>
 </template>
 
@@ -16,15 +16,19 @@
       position: String,
       bgClass: String,
       showLine: Boolean,
+      showTitle: Boolean,
     },
     data() {
       return {
+        param: {
+          title: this.title || "",
+          showLine: this.showLine,
+          showTitle: this.showTitle,
+        },
         className: {
           bg: this.bgClass || "bg-light"
         },
-        brand: this.title || "",
-        top: this.position === "top",
-        showHeaderLine: this.showLine,
+        top: this.position === "top"
       };
     },
   }

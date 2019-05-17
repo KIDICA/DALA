@@ -2,7 +2,7 @@
   <div id="app">
     <cala-nav title="CALA" ref="nav" v-bind:show-line="showLine">
       <slot>
-        <div class="btn-group btn-group-sm float-right p-1" role="group">
+        <div class="btn-group btn-group-sm float-right p-1" role="group" v-if="showButtons">
           <template v-for="route in routes">
             <router-link v-if="route.show" :key="route.path" :to="route.path" class="route btn" v-bind:class="{ 'btn-secondary': $route.path !== route.path }" active-class="btn-primary">
               <font-awesome v-if="route.icon" :icon="route.icon"/>
@@ -10,14 +10,14 @@
           </template>
         </div>
 
-        <div class="subtext text-dark w-100 d-block">
+        <div ref="subtitle" class="subtext text-dark w-100 d-block" v-if="showSubtitle">
           {{count.unlabeled+count.labeled}} Picture Uploaded | {{count.unlabeled}} Unlabeled
         </div>
       </slot>
     </cala-nav>
 
     <div class="container-fluid">
-      <router-view></router-view>
+      <router-view ref="view"></router-view>
     </div>
   </div>
 </template>
@@ -37,6 +37,8 @@
         title: "CALA",
         showLine: true,
         routes,
+        showSubtitle: false,
+        showButtons: false
       }
     },
     computed: {
@@ -51,7 +53,7 @@
     },
     watch: {
       $route(to) {
-        this.updateNav(to)
+        this.updateNav(to);
       }
     },
     methods: {
@@ -60,8 +62,14 @@
        */
       updateNav(to) {
         const route = routes.filter(router => router.path === to.path)[0];
-        this.$refs.nav.brand = route.title;
-        this.$refs.nav.showHeaderLine = route.showHeaderLine;
+
+        Object.keys(route.nav)
+          .forEach(key => this.$refs.nav.param[key] = route.nav[key]);
+
+        if (route.layout) {
+          Object.keys(route.layout)
+            .forEach(key => this[key] = route.layout[key]);
+        }
       }
     },
     mounted() {

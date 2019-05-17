@@ -8,25 +8,39 @@ import Hub from "../components/cala/Hub";
 import Stack from "../components/cala/Stack";
 
 /**
- * @type {{title: String, path: String, drawHeaderLine: Boolean}[]}
+ * @type {[{show: Boolean, icon: String, layout: {showButtons: Boolean, showSubtitle: Boolean}, title: String, nav: {showSubTitle: Boolean, showHeaderLine: Boolean, showTitle: Boolean}, path: String, , component: Object}]}
  */
 const router = [
   {
     show: true,
     icon: "camera",
     title: "CALA",
-    showHeaderLine: true,
     path: '/',
-    component: Stack
+    component: Stack,
+    nav: {
+      showTitle: true,
+      showLine: true,
+    },
+    layout: {
+      showButtons: true,
+      showSubtitle: true,
+    }
   },
 
   {
     show: true,
     icon: "chart-area",
     title: "CALA - Hub",
-    showHeaderLine: false,
     path: '/hub',
-    component: Hub
+    component: Hub,
+    nav: {
+      showTitle: false,
+      showLine: false,
+    },
+    layout: {
+      showButtons: true,
+      showSubtitle: false
+    }
   },
 
   // // List
