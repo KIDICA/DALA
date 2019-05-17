@@ -12,6 +12,8 @@ import Stack from "../components/cala/Stack";
  */
 const router = [
   {
+    show: true,
+    icon: "camera",
     title: "CALA",
     showHeaderLine: true,
     path: '/',
@@ -19,6 +21,8 @@ const router = [
   },
 
   {
+    show: true,
+    icon: "chart-area",
     title: "CALA - Hub",
     showHeaderLine: false,
     path: '/hub',

@@ -3,27 +3,11 @@
     <cala-nav title="CALA" ref="nav" v-bind:show-line="showLine">
       <slot>
         <div class="btn-group btn-group-sm float-right p-1" role="group">
-          <!--
-          <router-link tag="button" class="btn btn-success" to="/glide/tagged">
-            <i class="fa fa-tags"></i> <span class="badge badge-dark ml-1">{{count.labeled}}</span>
-          </router-link>
-          <router-link tag="button" class="btn btn-danger" to="/stack">
-            <span class="badge badge-dark ml-1">Labeling</span>
-          </router-link>
-          <router-link tag="button" class="btn btn-secondary" to="/grid">
-            <i class="fas fa-images"></i>
-          </router-link>
-
-          <router-link tag="button" class="btn btn-info" to="/list">
-            <i class="fa fa-list"></i>
-          </router-link>
-          -->
-          <router-link tag="button" class="btn btn-primary" to="/hub">
-            <font-awesome icon="chart-area"></font-awesome>
-          </router-link>
-          <router-link tag="button" class="btn btn-dark" to="/">
-            <font-awesome icon="camera"></font-awesome>
-          </router-link>
+          <template v-for="route in routes">
+            <router-link v-if="route.show" :key="route.path" :to="route.path" class="route btn" v-bind:class="{ 'btn-secondary': $route.path !== route.path }" active-class="btn-primary">
+              <font-awesome v-if="route.icon" :icon="route.icon"/>
+            </router-link>
+          </template>
         </div>
 
         <div class="subtext text-dark w-100 d-block">
@@ -52,6 +36,7 @@
       return {
         title: "CALA",
         showLine: true,
+        routes,
       }
     },
     computed: {
