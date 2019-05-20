@@ -16,6 +16,7 @@ const store = new Vuex.Store({
     tags: [],
     labeled: 0,
     imageCount: 0,
+    hasIterations: false,
     count: {labeled: 0, unlabeled: 0},
     /**
      * TODO:
@@ -34,6 +35,9 @@ const store = new Vuex.Store({
     },
     updateTags(state, tags) {
       state.tags = tags;
+    },
+    updateHasIterations(state, hasIterations) {
+      state.hasIterations = hasIterations;
     },
     /**
      * @param state {Object<string, Object|Array>}
@@ -70,6 +74,10 @@ const store = new Vuex.Store({
   },
 
   actions: {
+    queryHasIterations({commit}) {
+      network.query(`{ iterations { id }}`)
+        .then(result => commit("updateHasIterations", result.iterations.length > 0));
+    },
     queryCounts({commit}) {
       network.query(`
         {

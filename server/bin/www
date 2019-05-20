@@ -56,18 +56,17 @@ io.on("connection", socket => {
   });
 
   // Vuex centrally manages these counters and are therefore broad-casted to all clients.
-  socket.on("image-upload", image => {
+  socket.on(event.socket.broadcast.image.upload, image => {
     socket.broadcast.emit(event.socket.broadcast.image.upload, image);
-    // also back to sender
     socket.emit(event.socket.broadcast.image.upload, image);
   });
 
-  socket.on("tag-image", tag => {
+  socket.on(event.socket.broadcast.image.tagged, tag => {
     socket.broadcast.emit(event.socket.broadcast.image.tagged, tag);
     socket.emit(event.socket.broadcast.image.tagged, tag);
   });
 
-  socket.on("image-delete", image => {
+  socket.on(event.socket.broadcast.image.remove, image => {
     socket.broadcast.emit(event.socket.broadcast.image.remove, image);
     socket.emit(event.socket.broadcast.image.remove, image);
   });

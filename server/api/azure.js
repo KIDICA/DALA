@@ -149,10 +149,10 @@ Azure.prototype.predictUrl = function(imageUrl) {
       return;
     }
 
-    enqueue(trainer => {
+    enqueue((trainer, predictor) => {
       // TODO: Ask MS whats the difference between quicktest and classify.
-      //predictor.classifyImageUrlWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, imageUrl)
-      trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
+      predictor.classifyImageUrlWithNoStore(this.project.id, this.lastPublish(), imageUrl)
+      //trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
         .then(results => {
           logger.success({prefix: "azure", suffix: "(api-predictUrl)", message: imageUrl});
           resolve(results)
@@ -495,8 +495,11 @@ Azure.prototype.startTraining = function(status) {
               logger.debug("publishing iteration", newName);
               trainer.publishIteration(this.project.id, trainingIteration.id, newName, config.predictionResourceId)
                 .then(it => {
-                  this.iterations.push(it);
-                  resolve(trainingIteration)
+                  this.getIterations()
+                    .then(its => {
+                      this.iterations = its;
+                      resolve(trainingIteration);
+                    }).catch(error => reject(error));
                 })
                 .catch(error => {
                   logger.error(error);
@@ -543,9 +546,13 @@ Azure.prototype.deleteImages = function(imageIds) {
 Azure.prototype.getPerformance = function() {
   return new Promise((resolve, reject) => {
     enqueue(trainer => {
-      trainer.getIterationPerformance(this.project.id, this.lastIteration().id)
-        .then(result => resolve(result))
-        .catch(error => reject(error));
+      if (this.iterations.length > 0) {
+        trainer.getIterationPerformance(this.project.id, this.lastIteration().id)
+          .then(result => resolve(result))
+          .catch(error => reject(error));
+      } else {
+        reject("No performance data yet");
+      }
     });
   });
 };

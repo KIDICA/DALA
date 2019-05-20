@@ -7,7 +7,7 @@ import env from "./utils/environment";
 import network from "./utils/network";
 import store from "./store/state";
 import App from "./App.vue";
-import events from "./config/events";
+import event from "./config/events";
 
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {
@@ -62,7 +62,7 @@ Vue.config.errorHandler = function(err) {
 const error = window.console.error;
 window.console.error = function(...args) {
   alert(args);
-  socket.emit(events.socket.clientError, args);
+  socket.emit(event.socket.clientError, args);
   error.apply(this, args);
 };
 
@@ -76,16 +76,17 @@ new Vue({
   router,
   store,
   render: h => h(App),
-  mounted() {
+  created() {
     this.$store.dispatch("queryTags");
     this.$store.dispatch("queryCounts");
+    this.$store.dispatch("queryHasIterations");
 
-    this.$socket.on("broadcast-image-upload", image => {
+    this.$socket.on(event.socket.broadcast.image.upload, () => {
       this.$store.commit("incrementImageCount");
       this.$store.commit("incrementUnlabeledCount");
     });
 
-    this.$socket.on("broadcast-image-delete", image => {
+    this.$socket.on(event.socket.broadcast.image.remove, image => {
       if (!image.tags) {
         this.$store.commit("incrementUnlabeledCount", -1);
       } else {
@@ -94,7 +95,7 @@ new Vue({
       this.$store.commit("incrementImageCount", -1);
     });
 
-    this.$socket.on("broadcast-image-tagged", tag => {
+    this.$socket.on(event.socket.broadcast.image.tagged, tag => {
       this.$store.commit("incrementLabeledCount");
       this.$store.commit("incrementUnlabeledCount", -1);
       this.$store.commit("updateTagCounts", tag);

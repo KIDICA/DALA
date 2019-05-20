@@ -75,7 +75,7 @@
           <div class="card-body p-0">
             <cala-line-chart ref="chart"></cala-line-chart>
             <div class="btn-group" style="position: absolute; right:1em; bottom:1em;">
-              <cala-upload url="/api/dashboard/upload" v-on:uploaded="done"></cala-upload>
+              <cala-upload url="/api/dashboard/upload" v-on:uploaded="update"></cala-upload>
               <button @click="train" class="btn btn-outline-primary btn-lg bg-white">Retrain</button>
             </div>
           </div>
@@ -127,11 +127,19 @@
             return tag;
           });
         }
+      },
+      hasIterations: {
+        get() {
+          return this.$store.state.hasIterations;
+        }
       }
     },
     watch: {
       busy(val) {
         this.$refs.busy.work = val;
+      },
+      hasIterations(val) {
+        this.update();
       }
     },
     methods: {
@@ -143,7 +151,7 @@
         }`)
           .then(result => {
             this.$log.debug(result);
-            this.predict();
+            this.update();
             this.busy = false;
           })
           .catch(error => {
@@ -235,14 +243,15 @@
             this.busy = false;
           });
       },
-      done() {
-        this.predict();
-        this.performance();
+      update() {
+        if (this.hasIterations) {
+          this.predict();
+          this.performance();
+        }
       }
     },
     mounted: function() {
-      this.predict();
-      this.performance();
+      this.update();
       window.addEventListener('resize', this.resizeChart);
     }
   }

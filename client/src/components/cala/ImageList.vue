@@ -15,26 +15,28 @@
               <button class="btn btn-danger p-0 pl-2 pr-2" @click="flushBuffer">{{imageBuffer.length}}</button>
             </div>
           </div>
-          <div v-for="(image, index) in images" :key="image.id" class="row animated text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
+          <div v-for="(image, index) in images" :key="image.id" class="row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
             <!-- This arrangement is not particularly elegant and stems from the reasons that by design one tag is left and one right -->
 
             <div class="col pr-0">
-              <div v-if="!image.hasTags && image.probability" class="progress left bg-secondary w-100 text-right" style="right: 0;">
-                <div v-bind:style="{ width: (image.probability[tags[0].id]*100) + '%'}" class="progress-bar bg-success" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                  <span class="pr-2">{{(image.probability[tags[0].id]*100).toFixed(2)}}%</span>
+              <template v-if="tags.length > 0">
+                <div v-if="!image.hasTags && image.probability" class="progress left bg-secondary w-100 text-right" style="right: 0;">
+                  <div v-bind:style="{ width: (image.probability[tags[0].id]*100) + '%'}" class="progress-bar bg-success" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+                    <span class="pr-2">{{(image.probability[tags[0].id]*100).toFixed(2)}}%</span>
+                  </div>
                 </div>
-              </div>
 
-              <button @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="right: 0;">
-                {{tags[0].name}}
-                <font-awesome icon="check" v-if="image.tagSet[tags[0].id]"></font-awesome>
-              </button>
+                <button @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="right: 0;">
+                  {{tags[0].name}}
+                  <font-awesome icon="check" v-if="image.tagSet[tags[0].id]"></font-awesome>
+                </button>
 
-              <button class="btn p-0" @click="unlabel(image)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
-                <font-awesome icon="times" class="text-primary"></font-awesome>
-                <br/>
-                <small>Unlabel</small>
-              </button>
+                <button class="btn p-0" @click="unlabel(image)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
+                  <font-awesome icon="times" class="text-primary"></font-awesome>
+                  <br/>
+                  <small>Unlabel</small>
+                </button>
+              </template>
             </div>
 
             <div style="margin-right: -.5em; margin-left: -.5em; z-index: 2;">
@@ -42,22 +44,24 @@
             </div>
 
             <div class="col pl-0">
-              <div v-if="!image.hasTags && image.probability" class="progress left bg-transparent w-100 text-left" style="left: 0;">
-                <div v-bind:style="{ width: (image.probability[tags[1].id]*100) + '%'}" class="progress-bar bg-primary" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                  <span class="pl-2">{{(image.probability[tags[1].id]*100).toFixed(2)}}%</span>
+              <template v-if="tags.length > 0">
+                <div v-if="!image.hasTags && image.probability" class="progress left bg-transparent w-100 text-left" style="left: 0;">
+                  <div v-bind:style="{ width: (image.probability[tags[1].id]*100) + '%'}" class="progress-bar bg-primary" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+                    <span class="pl-2">{{(image.probability[tags[1].id]*100).toFixed(2)}}%</span>
+                  </div>
                 </div>
-              </div>
 
-              <button @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="left: 0;">
-                {{tags[1].name}}
-                <font-awesome icon="check" v-if="image.tagSet[tags[1].id]"></font-awesome>
-              </button>
+                <button @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="left: 0;">
+                  {{tags[1].name}}
+                  <font-awesome icon="check" v-if="image.tagSet[tags[1].id]"></font-awesome>
+                </button>
 
-              <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em; font-size: 0.9em;">
-                <font-awesome icon="trash" class="text-primary"></font-awesome>
-                <br/>
-                <small>Delete</small>
-              </button>
+                <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em; font-size: 0.9em;">
+                  <font-awesome icon="trash" class="text-primary"></font-awesome>
+                  <br/>
+                  <small>Delete</small>
+                </button>
+              </template>
             </div>
 
           </div>
@@ -70,6 +74,7 @@
 <script>
   import cb from "./Busy";
   import imageStore from "../../store/images";
+  import event from "./../../config/events.json";
 
   export default {
     name: "cala-imagelist",
@@ -99,7 +104,7 @@
         if (this.loaded && (this.images.length === 0)) {
           this.load();
         }
-      }
+      },
     },
     computed: {
       hasImages: function() {
@@ -110,6 +115,11 @@
           return this.$store.state.tags;
         },
       },
+      hasIterations: {
+        get() {
+          return this.$store.state.hasIterations;
+        }
+      }
     },
     methods: {
       flushBuffer() {
@@ -124,14 +134,11 @@
       tagImage(image, tag, index) {
         this.busy = true;
         imageStore.tagImage({imageId: image.id, tagId: tag.id})
-          .then(tag2 => {
-            this.$socket.emit("tag-image", tag);
+          .then(() => {
+            this.$socket.emit(event.socket.broadcast.image.tagged, tag);
             image.tagSet[tag.id] = true;
             image.hasTags = true;
-            setTimeout(() => {
-              this.images[index].className = "bounceOutLeft";
-              setTimeout(() => this.images.splice(index, 1), 700);
-            }, 1000);
+            setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 2000);
             this.busy = false;
           });
       },
@@ -142,9 +149,8 @@
         this.busy = true;
         imageStore.destroy(image)
           .then(() => {
-            this.$socket.emit("image-delete", image);
-            this.images[index].className = "bounceOutLeft";
-            setTimeout(() => this.images.splice(index, 1), 700);
+            this.$socket.emit(event.socket.broadcast.image.remove, image);
+            setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 700);
             this.busy = false;
           });
       },
@@ -155,18 +161,23 @@
           image.tagSet = {};
           image.className = "bounceInLeft";
           if (!image.hasTags) {
-            imageStore.predictUrl(image.imageUrl)
-              .then(probabilities => {
-                let ps = {};
-                probabilities.forEach(p => ps[p.tag.id] = p.probability);
-                image.probability = ps;
-                resolve(image);
-              }).catch(error => {
-              this.$log.error(error);
-              if (error === "Nothing trained yet") {
-                resolve(image);
-              }
-            });
+            if (this.hasIterations) {
+              imageStore.predictUrl(image.imageUrl)
+                .then(probabilities => {
+                  let ps = {};
+                  probabilities.forEach(p => ps[p.tag.id] = p.probability);
+                  image.probability = ps;
+                  resolve(image);
+                })
+                .catch(error => {
+                  this.$log.error(error);
+                  if (error === "Nothing trained yet") {
+                    resolve(image);
+                  }
+                });
+              return;
+            }
+            resolve(image);
             return;
           } else {
             image.tags.forEach(tag => image.tagSet[tag.id] = true);
@@ -185,7 +196,6 @@
         this.loaded = false;
         imageStore.all({take: this.take})
           .then(images => {
-            // Don't spam the API.
             images.reverse()
               .forEach(image => this.mapImage(image).then(this.pushImage));
             this.loaded = true;
