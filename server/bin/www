@@ -14,7 +14,6 @@ const logger = require("../utils/logger");
 /**
  * Get port from environment and store in Express.
  */
-
 const PORT = normalizePort(process.env.PORT || '3000');
 app.set('port', PORT);
 
@@ -46,7 +45,9 @@ let socketClients = 0;
 io.on("connection", socket => {
   logger.debug("socket-connected");
   socketClients += 1;
-  socket.emit("clients", socketClients);
+
+  socket.broadcast.emit(event.socket.broadcast.clientCount, socketClients);
+  socket.emit(event.socket.broadcast.clientCount, socketClients);
 
   // Allows debugging client issues by sending the to the server
   // and writing them to the log file in production.
@@ -70,6 +71,8 @@ io.on("connection", socket => {
     socket.broadcast.emit(event.socket.broadcast.image.remove, image);
     socket.emit(event.socket.broadcast.image.remove, image);
   });
+
+  socket.on('disconnect', () => socketClients -= 1);
 });
 
 /**
