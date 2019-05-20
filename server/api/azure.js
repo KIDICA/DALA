@@ -15,20 +15,16 @@ const pred = new PredictionApiClient(config.predictionKey, config.endPoint);
 
 // Skeleton for an API queue handles the issue of API blocking due to heavy successive calls.
 // All queries will first be queue and executed after an certain interval.
-/** @type {[{type: String, callback: Function}]} Global management, this is not instance bound. */
+/** @type {[{Function}]} Global management, this is not instance bound. */
 const apiQueue = [];
-const dequeueInterval = 200;
+const dequeueInterval = 100;
 
 const time = require("../utils/time");
 
 setInterval(() => {
   if (apiQueue.length > 0) {
-    const call = apiQueue.shift();
-    if (call.type === "trainer") {
-      call.callback(tr);
-    } else {
-      call.callback(pred);
-    }
+    const callback = apiQueue.shift();
+    callback(tr, pred);
   }
 }, dequeueInterval);
 
@@ -52,15 +48,8 @@ function Azure() {
 /**
  * @param {Function} callback
  */
-function invokeTrainer(callback) {
-  apiQueue.push({type: "trainer", callback});
-}
-
-/**
- * @param {Function} callback
- */
-function invoicePredictor(callback) {
-  apiQueue.push({type: "predictor", callback});
+function enqueue(callback) {
+  apiQueue.push(callback);
 }
 
 /**
@@ -82,6 +71,13 @@ Azure.prototype.lastPublish = function() {
 };
 
 /**
+ * @returns {Iteration}
+ */
+Azure.prototype.lastIteration = function() {
+  return this.iterations[this.iterations.length - 1];
+};
+
+/**
  * @param {string} [projectId] Optional, if not given then it's taken from the config.json.
  * @returns {Promise<Azure>}
  */
@@ -89,7 +85,7 @@ Azure.prototype.init = function(projectId) {
   return new Promise((resolve, reject) => {
     const id = projectId || config.projectId;
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       Promise.all([
         trainer.getProject(id),
         trainer.getIterations(id)
@@ -117,7 +113,7 @@ Azure.prototype.init = function(projectId) {
  */
 Azure.prototype.predict = function(file) {
   return new Promise((resolve, reject) => {
-    invoicePredictor(predictor => {
+    enqueue((trainer, predictor) => {
       predictor.classifyImageWithNoStore(this.project.id, this.lastPublish(), file)
         .then(results => resolve(results))
         .catch(error => {
@@ -153,7 +149,7 @@ Azure.prototype.predictUrl = function(imageUrl) {
       return;
     }
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       // TODO: Ask MS whats the difference between quicktest and classify.
       //predictor.classifyImageUrlWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, imageUrl)
       trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
@@ -175,7 +171,7 @@ Azure.prototype.predictUrl = function(imageUrl) {
  */
 Azure.prototype.storeImageInProject = function(url) {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.createImagesFromUrls(this.project.id, {images: [url]})
         .then(result => resolve(result))
         .catch(error => reject(error));
@@ -190,7 +186,7 @@ Azure.prototype.storeImageInProject = function(url) {
 Azure.prototype.getLabelCounts = function() {
   return new Promise((resolve, reject) => {
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       Promise.all([
         trainer.getTaggedImageCount(this.project.id),
         trainer.getUntaggedImageCount(this.project.id),
@@ -209,7 +205,7 @@ Azure.prototype.getLabelCounts = function() {
  */
 Azure.prototype.getTags = function(options) {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getTags(this.project.id, options)
         .then(tags => {
           logger.success({prefix: "azure", message: tags});
@@ -233,7 +229,7 @@ Azure.prototype.getTags = function(options) {
 Azure.prototype.load = function(param = {take: 10, skip: 0}) {
   return new Promise((resolve, reject) => {
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       Promise.all([
         trainer.getTags(this.project.id),
         trainer.getTaggedImages(this.project.id, {take: param.take, skip: param.skip}),
@@ -254,7 +250,7 @@ Azure.prototype.load = function(param = {take: 10, skip: 0}) {
  */
 Azure.prototype.getTaggedImages = function(param) {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getTaggedImages(this.project.id, param)
         .then(result => resolve(result))
         .catch(error => {
@@ -272,7 +268,7 @@ Azure.prototype.getTaggedImages = function(param) {
  */
 Azure.prototype.getUntaggedImages = function(param) {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getUntaggedImages(this.project.id, param)
         .then(result => resolve(result))
         .catch(error => {
@@ -290,7 +286,7 @@ Azure.prototype.getUntaggedImages = function(param) {
  */
 Azure.prototype.getImageById = function(id) {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getImagesByIds(this.project.id, {imageIds: [id]})
         .then(result => resolve(result)[0])
         .catch(reject);
@@ -313,7 +309,7 @@ Azure.prototype.uploadFile = function(param) {
         reject(err);
         return;
       }
-      invokeTrainer(trainer => {
+      enqueue(trainer => {
         trainer.createImagesFromData(this.project.id, data, {tagIds: param.tags || []})
           .then(result => {
             logger.success({prefix: "azure", message: result, suffix: "(createImagesFromData)"});
@@ -342,7 +338,7 @@ Azure.prototype.uploadDir = function(dir, tagId) {
     files.forEach((file, index) => {
       setTimeout(async () => {
         try {
-          invokeTrainer(async trainer => {
+          enqueue(async trainer => {
             await trainer.createImagesFromData(this.project.id, fs.readFileSync(`${dir}/${file}`), {tagIds: [tagId]});
           });
         } catch (e) {
@@ -375,7 +371,7 @@ Azure.prototype.tagImage = function(tagData) {
         const tagIds = tags.map(tag => tag.id);
         logger.success({suffix: "(delete-tags)", message: tagIds, prefix: "azure"});
 
-        invokeTrainer(trainer => {
+        enqueue(trainer => {
           trainer.deleteImageTags(this.project.id, [tagData.imageId], tagIds)
             .then(result => {
               trainer.createImageTags(this.project.id, {tags: [tagData]})
@@ -401,7 +397,7 @@ Azure.prototype.tagImage = function(tagData) {
  */
 Azure.prototype.removeTagsFromImages = function() {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.deleteImageTags(this.project.id, this.imageIds, this.tagIds)
         .then(result => resolve(result))
         .catch(error => reject(error));
@@ -419,7 +415,7 @@ Azure.prototype.deleteIteration = function(it) {
   return new Promise((resolve, reject) => {
     logger.debug({suffix: "un-publish-iteration", prefix: "azure", message: it});
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.unpublishIteration(this.project.id, it.id)
         .then(() => {
           trainer.deleteIteration(this.project.id, it.id)
@@ -473,7 +469,7 @@ Azure.prototype.train = async function(status) {
 Azure.prototype.startTraining = function(status) {
   return new Promise((resolve, reject) => {
 
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.trainProject(this.project.id)
         .then(async trainingIteration => {
           logger.debug("Training started...");
@@ -530,7 +526,7 @@ Azure.prototype.deleteImages = function(imageIds) {
     imageIds = [imageIds];
   }
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.deleteImages(this.project.id, imageIds)
         .then(response => resolve(response))
         .catch(error => {
@@ -542,11 +538,24 @@ Azure.prototype.deleteImages = function(imageIds) {
 };
 
 /**
- * @returns {Promise<number>}
+ * @returns {Promise<IterationPerformance>}
+ */
+Azure.prototype.getPerformance = function() {
+  return new Promise((resolve, reject) => {
+    enqueue(trainer => {
+      trainer.getIterationPerformance(this.project.id, this.lastIteration().id)
+        .then(result => resolve(result))
+        .catch(error => reject(error));
+    });
+  });
+};
+
+/**
+ * @returns {Promise<Number>}
  */
 Azure.prototype.getIterationCount = function() {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getIterations(this.project.id)
         .then(its => {
           resolve(its.length);
@@ -565,7 +574,7 @@ Azure.prototype.getIterationCount = function() {
  */
 Azure.prototype.getIterations = function() {
   return new Promise((resolve, reject) => {
-    invokeTrainer(trainer => {
+    enqueue(trainer => {
       trainer.getIterations(this.project.id)
         .then(its => {
           logger.debug("Iterations: ", its);
@@ -599,7 +608,7 @@ Azure.prototype.getPredictionHistory = function(file) {
         let count = its.length;
 
         its.forEach(it => {
-          invokeTrainer(trainer => {
+          enqueue(trainer => {
             // Prevents API blocking due to DoS
             trainer.quickTestImage(this.project.id, file, {iterationId: it.id})
             //predictor.classifyImageWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, file)

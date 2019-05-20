@@ -6,7 +6,7 @@ const schema = fs.readFileSync(__dirname + '/schema.graphql', 'utf8');
 const logger = require("./../../../utils/logger");
 
 var api = undefined;
-(async function () {
+(async function() {
   api = await apiBuilder.create();
 }());
 
@@ -51,9 +51,9 @@ const root = {
           : await api.getUntaggedImages({take: args.take, skip: args.skip})
         // No type argument
         : (await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId}))
-        .concat(
-          await api.getUntaggedImages({take: args.take, skip: args.skip})
-        );
+          .concat(
+            await api.getUntaggedImages({take: args.take, skip: args.skip})
+          );
 
     return result.map(image => {
       return {
@@ -92,7 +92,7 @@ const root = {
   },
 
   async train() {
-    const training = await api.train(function (status) {
+    const training = await api.train(function(status) {
       logger.debug(status);
     });
 
@@ -177,6 +177,10 @@ const root = {
       logger.error(e);
       throw new Error(e);
     }
+  },
+
+  async performance() {
+    return await api.getPerformance();
   }
 };
 

@@ -14,6 +14,7 @@ type Query {
     train: Training
     predictions(file: String!): [Predictions]
     hasIterations: Boolean!
+    performance: IterationPerformance
 }
 
 enum ImageType { tagged, untagged }
@@ -67,4 +68,23 @@ type Iteration {
     name: String
     status: String
     created: String
+}
+
+type TagPerformance {
+    id: ID
+    name: String
+    precision: Float
+    precisionStdDeviation: Float
+    recall: Float
+    recallStdDeviation: Float
+    averagePrecision: Float
+}
+
+type IterationPerformance {
+    perTagPerformance: [TagPerformance]
+    precision: Float
+    precisionStdDeviation: Float
+    recall: Float
+    recallStdDeviation: Float
+    averagePrecision: Float
 }
