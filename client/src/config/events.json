@@ -1,6 +1,7 @@
 {
   "socket": {
     "broadcast": {
+      "clientCount": "client-count",
       "image": {
         "remove": "broadcast-image-delete",
         "upload": "broadcast-image-upload",

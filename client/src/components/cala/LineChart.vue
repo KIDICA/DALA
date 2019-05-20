@@ -1,5 +1,5 @@
 <template>
-  <div class="ct-chart" ref="chart"></div>
+  <div ref="chart" class="ct-chart h-100"></div>
 </template>
 
 <script>
@@ -13,7 +13,7 @@
   }
 
   export default {
-    name: "cala-chart",
+    name: "cala-line-chart",
     data() {
       return {
         data: {}
@@ -40,7 +40,7 @@
           this.chart.detach();
         }
         // Test random data
-        this.chart = new Chartist.Line('.ct-chart',
+        this.chart = new Chartist.Line(this.$refs.chart,
           {
             labels: param.labels,
             series: param.series,
@@ -71,7 +71,7 @@
           }
         );
 
-        this.chart.on('draw', function (data) {
+        this.chart.on('draw', function(data) {
           if (data.type === 'line' || data.type === 'area') {
             data.element.animate({
               d: {

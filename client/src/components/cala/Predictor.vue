@@ -1,54 +1,79 @@
 <template>
-  <div>
+  <div class="h-100">
     <cala-busy ref="busy"></cala-busy>
 
-    <div class="row" v-if="false">
-      <div class="col">
-        <cala-meter v-if="hasCover" v-bind:class="{hidden: busy}" ref="meter" v-bind:tags="localTags"></cala-meter>
+    <div class="row no-gutters">
+      <div class="col  mr-2">
+        <div class="card h-100 border-0">
+          <div class="card-header text-primary bg-transparent pt-0 pr-0 pl-0 border-0 pb-2">
+            <span class="text-uppercase h4 font-weight-bold">Active Learning Session</span>
+          </div>
+          <div class="card-body p-0">
+            <img ref="image" class="img-thumbnail shadow-sm h-100 cover-image" v-bind:src="cover">
+          </div>
+        </div>
       </div>
+
+      <div class="col mr-2">
+        <div class="card bg-light h-100 border-light">
+          <div class="card-header font-weight-bold text-white bg-light border-0">
+            <span class="text-uppercase h4">Overall Stats</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="row">
+              <div class="col">
+                <small class="text-uppercase">Images Uploaded:</small>
+                <button class="btn-outline-primary border-2 bg-white btn-lg btn-block text-center">
+                  <span class="font-weight-bold">{{imageCount}}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="row mt-2" v-for="tag in tags" :key="tag.id">
+              <div class="col">
+                <small class="text-uppercase">{{tag.name}}</small>
+                <button :key="tag.id" class="border-2 btn btn-block btn-lg border-white text-white" v-bind:class="tag.className">
+                  {{tag.imageCount}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- col -->
+
+      <div class="col">
+        <div class="card bg-light h-100 border-light">
+          <div class="card-header font-weight-bold text-white bg-light border-0">
+            <span class="text-uppercase h4">Average Precision</span>
+          </div>
+          <div class="card-body text-center">
+            <cala-pie-chart ref="performance"></cala-pie-chart>
+            <span class="text-secondary font-weight-bolder display-4">
+              {{(averagePrecision*100).toFixed(2)}}%
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <div class="row">
-      <div class="col-5">
-        <img ref="image" class="img-thumbnail shadow-sm cover-image" v-bind:src="cover">
-      </div>
-
+    <div class="row mt-4">
       <div class="col">
-        <div class="row">
-          <div class="col">
-            <small class="text-uppercase">Images Uploaded:</small>
-            <button disabled style="opacity: .5" class="btn-outline-primary btn-lg btn-block text-center bg-transparent">
-              {{imageCount}}
-            </button>
-          </div>
-        </div>
-
-        <div class="row mt-2">
-          <div class="col" v-for="tag in tags" :key="tag.id">
-            <small class="text-uppercase">{{tag.name}}</small>
-            <button :key="tag.id" class="btn btn-block btn-lg text-white" v-bind:class="tag.className">
-              {{tag.imageCount}}
-            </button>
-          </div>
-        </div>
-
-        <ul class="list-inline float-right mr-3" style="bottom: 0; position: absolute; right: 0;">
+        <ul class="list-inline float-right">
           <li class="list-inline-item mr-5" v-for="tag in tags" :key="tag.id">
             <span class="badge p-2 legend mr-1" style="border-radius: 2em" v-bind:class="tag.className">&nbsp;</span>
             <span style="font-size: 1.3em;" class="font-weight-bolder">{{tag.name}}</span>
           </li>
         </ul>
-
-      </div> <!-- col -->
-
+      </div>
     </div>
 
-    <div class="row p-0 mt-2">
+    <div class="row p-0 mt-2" v-bind:style="{height: chartHeight}">
       <div class="col">
 
-        <div class="card shadow-sm">
+        <div class="card h-100">
           <div class="card-body p-0">
-            <cala-chart ref="chart" style="width: 100%;" v-bind:style="{height: chartHeight}"></cala-chart>
+            <cala-line-chart ref="chart"></cala-line-chart>
             <div class="btn-group" style="position: absolute; right:1em; bottom:1em;">
               <cala-upload url="/api/dashboard/upload" v-on:uploaded="done"></cala-upload>
               <button @click="train" class="btn btn-outline-primary btn-lg bg-white">Retrain</button>
@@ -64,26 +89,26 @@
 
 <script>
   import Upload from "./Upload";
-  import Meter from "./Meter";
-  import Budy from "./Busy";
-  import Chart from "./Chart";
+  import Busy from "./Busy";
+  import LineChart from "./LineChart";
+  import PieChart from "./PieChart";
 
   export default {
     name: "cala-dashboard",
     components: {
       "cala-upload": Upload,
-      "cala-meter": Meter,
-      "cala-busy": Budy,
-      "cala-chart": Chart
+      "cala-busy": Busy,
+      "cala-line-chart": LineChart,
+      "cala-pie-chart": PieChart,
     },
     data: function() {
       return {
         hasCover: true,
         cover: this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`,
         busy: false,
-        showMeter: false,
         predictions: [],
-        chartHeight: "5em"
+        chartHeight: "5em",
+        averagePrecision: 0
       };
     },
     computed: {
@@ -127,7 +152,37 @@
           });
       },
       resizeChart() {
-        this.chartHeight = (document.body.clientHeight - this.$refs.image.clientHeight - 180) + "px";
+        this.chartHeight = (document.body.clientHeight - 515) + "px";
+      },
+      performance() {
+        this.busy = true;
+        this.$query(`
+          {
+            performance {
+              precision
+              recall
+              averagePrecision
+
+              perTagPerformance {
+                id
+                name
+                precision
+                recall
+                averagePrecision
+              }
+            }
+          }
+        `).then(result => {
+          this.averagePrecision = result.performance.averagePrecision;
+          this.$refs.performance.data = {
+            series: [result.performance.averagePrecision * 100],
+            labels: ["Performance"]
+          };
+          this.busy = false;
+        }).catch(error => {
+          alert(error);
+          this.busy = false;
+        })
       },
       predict() {
         this.busy = true;
@@ -157,7 +212,6 @@
             this.cover = this.$base + `uploads/predict.jpg?fetch=${new Date().getTime()}`;
 
             this.hasCover = true;
-            this.showMeter = true;
 
             // We know based on the order of the tags in which they are
             // displayed and which graph belongs to which tag (and color).
@@ -183,10 +237,12 @@
       },
       done() {
         this.predict();
+        this.performance();
       }
     },
     mounted: function() {
       this.predict();
+      this.performance();
       window.addEventListener('resize', this.resizeChart);
     }
   }
@@ -207,7 +263,6 @@
   }
 
   .cover-image {
-    height: 25em;
     width: 100%;
     object-fit: contain;
   }

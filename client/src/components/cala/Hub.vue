@@ -1,7 +1,7 @@
 <template>
-  <div class="row pt-3">
+  <div class="row no-gutters mt-3">
 
-    <div class="col-4 pl-0 pr-0 pl-2">
+    <div class="col-lg-4 mb-2">
       <div class="card border-primary" v-bind:style="{height: height}">
         <div class="card-header gradient text-white p-2">Image Stream</div>
         <div class="card-body p-0" style="overflow-y: scroll">
@@ -10,11 +10,11 @@
       </div>
     </div>
 
-    <div class="col pr-2">
+    <div class="col-lg ml-3">
       <div class="card border-primary" v-bind:style="{height: height}">
         <div class="card-header gradient text-white p-2">Prediction</div>
         <div class="card-body p-3">
-          <cala-dashboard style="min-height: 100%;"></cala-dashboard>
+          <cala-dashboard></cala-dashboard>
         </div>
       </div>
     </div>
@@ -38,16 +38,15 @@
     },
     methods: {
       resize() {
-        this.height = (document.body.clientHeight - 100) + "px";
+        this.height = (document.body.clientHeight - 35) + "px";
       }
     },
     mounted() {
       this.resize();
-      window.addEventListener('resize',this.resize);
+      window.addEventListener('resize', this.resize);
     }
   }
 </script>
 
-<style scoped>
-
+<style>
 </style>

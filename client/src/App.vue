@@ -74,23 +74,27 @@
     },
     mounted() {
       this.updateNav(this.$route);
-      // Everything on the page must be SSL requested.
-      setTimeout(function() {
-        // This hides the address bar:
-        window.scrollTo(0, 1);
-      }, 0);
     }
   }
 </script>
 
 <style>
+  .border-1 {
+    border-width: 1px !important;
+  }
+  .border-2 {
+    border-width: 2px !important;
+  }
+  .border-3 {
+    border-width: 3px !important;
+  }
+
   .gradient {
     background-image: linear-gradient(to right, #AE0055, #7C1344);
   }
 
   body {
-    margin: 0;
-    padding: 4em 0 0;
+    overflow: hidden;
   }
 
   .subtext {

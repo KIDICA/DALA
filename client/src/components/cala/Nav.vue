@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-white p-0">
-    <div class="pt-1 pb-1 pl-2 pr-2">
-      <div class="navbar-brand mb-0" v-html="param.title" v-if="param.showTitle"></div>
+    <div class="pt-1 pb-1 pl-2 pr-2 w-100" style="display: table">
+      <span class="navbar-brand mb-0" v-html="param.title" v-if="param.showTitle"></span>
       <slot></slot>
     </div>
     <div class="gradient" id="line" v-if="param.showLine"></div>
@@ -44,7 +44,7 @@
     color: #4A494A;
     display: table;
     width: 100%;
-    z-index: 2;
+    z-index: 100;
     border-bottom: dimgray;
     position: fixed;
     top: 0;

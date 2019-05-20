@@ -8,9 +8,26 @@ import Hub from "../components/cala/Hub";
 import Stack from "../components/cala/Stack";
 
 /**
- * @type {[{show: Boolean, icon: String, layout: {showButtons: Boolean, showSubtitle: Boolean}, title: String, nav: {showSubTitle: Boolean, showHeaderLine: Boolean, showTitle: Boolean}, path: String, , component: Object}]}
+ * {VueRouter} routes, with additional information used for the page layout or navigation bar generation.
+ * @type {
+ * [{
+ *   show: Boolean,
+ *   icon: String,
+ *   layout: {
+ *     showButtons: Boolean,
+ *     showSubtitle: Boolean
+ *   },
+ *   title: String,
+ *   nav: {
+ *     showSubTitle: Boolean,
+ *     showHeaderLine: Boolean,
+ *     showTitle: Boolean
+ *   },
+ *   path: String,
+ *   component: Object
+ * }]}
  */
-const router = [
+const routes = [
   {
     show: true,
     icon: "camera",
@@ -38,7 +55,7 @@ const router = [
       showLine: false,
     },
     layout: {
-      showButtons: true,
+      showButtons: false,
       showSubtitle: false
     }
   },
@@ -86,4 +103,4 @@ const router = [
   // }
 ];
 
-export default router;
+export default routes;
