@@ -2,8 +2,9 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
 
-    <button class="btn btn-primary btn-lg" @click="upload">
-      <font-awesome icon="upload"></font-awesome> <span v-html="caption" class="ml-2"></span>
+    <button class="btn btn-lg" @click="upload" v-bind:class="btn.className">
+      <font-awesome icon="upload"></font-awesome>
+      <span v-html="caption" class="ml-2"></span>
     </button>
     <form style="display: none" id="imageForm" method="post" enctype="multipart/form-data" action="/upload">
       <input ref="inputFile" @change="submit" class="hidden" type="file" accept="image/jpeg,image/jpg,image/png;capture=camera">
@@ -21,13 +22,17 @@
     },
     props: {
       url: String,
+      buttonClass: String,
       uploaded: Function,
-      uploading: Function
+      uploading: Function,
     },
     data() {
       return {
+        btn: {
+          className: this.buttonClass || "btn-primary",
+        },
         caption: "Upload",
-        resourceUrl: this.url
+        resourceUrl: this.url,
       };
     },
     methods: {
@@ -57,7 +62,7 @@
         return new Promise((resolve, reject) => {
           this.$refs.work = true;
           const formData = new FormData();
-          formData.append('file', file);
+          formData.append("file", file);
 
           this.$http.post(this.resourceUrl, formData)
             .then(response => {
@@ -70,9 +75,9 @@
               this.$refs.work = false;
             });
         });
-      }
+      },
     },
-  }
+  };
 </script>
 
 <style scoped>
