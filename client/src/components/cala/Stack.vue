@@ -5,7 +5,7 @@
     <div class="h-100 w-100 align-middle overflow-hidden text-center">
       <div class="image" v-for="(image, index) in images" :key="image.id" v-bind:style="{transform: 'rotate(' + image.rot + 'deg) translateX(' + image.offsetX + 'px) translateY(' + image.offsetY + 'px)' , zIndex: 2*index}">
         <img v-bind:src="image.thumbnailUrl" class="img-thumbnail"/>
-        <button @click="destroyImage(image)" class="btn position-absolute" style="right: 4em; top: .5em;" v-bind:style="{zIndex: (2*index)+1}">
+        <button @click="destroyImage(image)" class="btn position-absolute" style="right: 6em; top: .5em;" v-bind:style="{zIndex: (2*index)+1}">
           <font-awesome :icon="'times'" class="h4 text-white"></font-awesome>
         </button>
       </div>

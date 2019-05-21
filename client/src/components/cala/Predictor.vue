@@ -3,17 +3,6 @@
     <cala-busy ref="busy"></cala-busy>
 
     <div class="row no-gutters">
-      <div class="col  mr-2">
-        <div class="card h-100 border-0">
-          <div class="card-header text-primary bg-transparent pt-0 pr-0 pl-0 border-0 pb-2">
-            <span class="text-uppercase h4 font-weight-bold">Active Learning Session</span>
-          </div>
-          <div class="card-body p-0">
-            <img ref="image" class="img-thumbnail shadow-sm h-100 cover-image" v-bind:src="cover">
-          </div>
-        </div>
-      </div>
-
       <div class="col mr-2">
         <div class="card bg-light h-100 border-light">
           <div class="card-header font-weight-bold text-white bg-light border-0">
@@ -29,7 +18,7 @@
               </div>
             </div>
 
-            <div class="row mt-2" v-for="tag in tags" :key="tag.id">
+            <div class="row mt-3" v-for="tag in tags" :key="tag.id">
               <div class="col">
                 <small class="text-uppercase">{{tag.name}}</small>
                 <button :key="tag.id" class="border-2 btn btn-block btn-lg border-white text-white" v-bind:class="tag.className">
@@ -37,6 +26,16 @@
                 </button>
               </div>
             </div>
+
+            <div class="row mt-3">
+              <div class="col">
+                <small class="text-uppercase">Unlabeled</small>
+                <button class="btn-dark btn-lg border-2 border-white btn-block text-center">
+                  <span class="font-weight-bold">{{imageCount-count.labeled}}</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div> <!-- col -->
@@ -57,30 +56,43 @@
 
     </div>
 
-    <div class="row mt-4">
+    <div class="row mt-3">
       <div class="col">
-        <ul class="list-inline float-right">
-          <li class="list-inline-item mr-5" v-for="tag in tags" :key="tag.id">
-            <span class="badge p-2 legend mr-1" style="border-radius: 2em" v-bind:class="tag.className">&nbsp;</span>
-            <span style="font-size: 1.3em;" class="font-weight-bolder">{{tag.name}}</span>
-          </li>
-        </ul>
+        <span class="text-uppercase h4 font-weight-bold text-primary">Active Learning Session</span>
       </div>
     </div>
 
-    <div class="row p-0 mt-2" v-bind:style="{height: chartHeight}">
-      <div class="col">
-
-        <div class="card h-100">
-          <div class="card-body p-0">
-            <cala-line-chart ref="chart"></cala-line-chart>
-            <div class="btn-group" style="position: absolute; right:1em; bottom:1em;">
-              <cala-upload url="/api/dashboard/upload" v-on:uploaded="update"></cala-upload>
-              <button @click="train" class="btn btn-outline-primary btn-lg bg-white">Retrain</button>
+    <div class="row no-gutters mt-3" v-bind:style="{height: chartHeight}">
+      <div class="col-3  mr-2">
+        <div class="row">
+          <div class="col">
+            <div class="card h-100 border-0">
+              <div class="card-body p-0">
+                <img ref="image" class="h-100 shadow-sm mb-3 img-thumbnail shadow-sm cover-image" v-bind:src="cover"/>
+                <cala-upload button-class="btn-block btn-outline-primary bg-white" url="/api/dashboard/upload" v-on:uploaded="update"></cala-upload>
+                <button @click="train" class="mt-3 btn btn-block btn-secondary btn-lg">Retrain</button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body p-0">
+            <cala-line-chart ref="chart"></cala-line-chart>
+
+            <div class="position-absolute bg-white rounded-left rounded-right text-center"
+                 style="bottom: 0; left: 40%; border-top-left-radius: .8em !important;border-top-right-radius: .8em !important; opacity: .9">
+              <ul class="list-inline m-0 p-1">
+                <li class="list-inline-item mr-2 ml-2 pb-0" v-for="tag in tags" :key="tag.id">
+                  <span class="badge p-2 legend mr-3" style="border-radius: 2em" v-bind:class="tag.className">&nbsp;</span>
+                  <span style="font-size: 1.3em;" class="font-weight-bolder">{{tag.name}}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -108,14 +120,19 @@
         busy: false,
         predictions: [],
         chartHeight: "5em",
-        averagePrecision: 0
+        averagePrecision: 0,
       };
     },
     computed: {
       imageCount: {
         get() {
           return this.$store.state.imageCount;
-        }
+        },
+      },
+      count: {
+        get() {
+          return this.$store.state.count;
+        },
       },
       tags: {
         get() {
@@ -126,13 +143,13 @@
             tag.className = classNames[index % count];
             return tag;
           });
-        }
+        },
       },
       hasIterations: {
         get() {
           return this.$store.state.hasIterations;
-        }
-      }
+        },
+      },
     },
     watch: {
       busy(val) {
@@ -140,7 +157,7 @@
       },
       hasIterations(val) {
         this.update();
-      }
+      },
     },
     methods: {
       train() {
@@ -160,7 +177,7 @@
           });
       },
       resizeChart() {
-        this.chartHeight = (document.body.clientHeight - 515) + "px";
+        this.chartHeight = (document.body.clientHeight - 595) + "px";
       },
       performance() {
         this.busy = true;
@@ -184,13 +201,13 @@
           this.averagePrecision = result.performance.averagePrecision;
           this.$refs.performance.data = {
             series: [result.performance.averagePrecision * 100],
-            labels: ["Performance"]
+            labels: ["Performance"],
           };
           this.busy = false;
         }).catch(error => {
           alert(error);
           this.busy = false;
-        })
+        });
       },
       predict() {
         this.busy = true;
@@ -231,7 +248,7 @@
 
             this.$refs.chart.data = {
               series: series,
-              labels: new Array(series.length).fill(0).map((p, index) => "T-" + index)
+              labels: new Array(series.length).fill(0).map((p, index) => "T-" + index),
             };
 
             this.resizeChart();
@@ -248,13 +265,13 @@
           this.predict();
           this.performance();
         }
-      }
+      },
     },
     mounted: function() {
       this.update();
-      window.addEventListener('resize', this.resizeChart);
-    }
-  }
+      window.addEventListener("resize", this.resizeChart);
+    },
+  };
 </script>
 
 <style scoped>
