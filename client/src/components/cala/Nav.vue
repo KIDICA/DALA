@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white p-0">
+  <nav class="navbar navbar-expand-lg navbar-light bg-white p-0" v-show="param.showLine&&param.title">
     <div class="pt-1 pb-1 pl-2 pr-2 w-100" style="display: table">
       <span class="navbar-brand mb-0" v-html="param.title" v-if="param.showTitle"></span>
       <slot></slot>
@@ -12,6 +12,7 @@
   export default {
     name: "cala-nav",
     props: {
+      hide: Boolean,
       title: String,
       position: String,
       bgClass: String,

@@ -17,7 +17,9 @@
     </cala-nav>
 
     <div class="container-fluid">
-      <router-view ref="view"></router-view>
+      <keep-alive include="/">
+        <router-view ref="view"></router-view>
+      </keep-alive>
     </div>
   </div>
 </template>
@@ -63,8 +65,12 @@
       updateNav(to) {
         const route = routes.filter(router => router.path === to.path)[0];
 
-        Object.keys(route.nav)
-          .forEach(key => this.$refs.nav.param[key] = route.nav[key]);
+        if (route.nav) {
+          Object.keys(route.nav)
+            .forEach(key => {
+              this.$refs.nav.param[key] = route.nav[key]
+            });
+        }
 
         if (route.layout) {
           Object.keys(route.layout)
@@ -82,9 +88,11 @@
   .border-1 {
     border-width: 1px !important;
   }
+
   .border-2 {
     border-width: 2px !important;
   }
+
   .border-3 {
     border-width: 3px !important;
   }
@@ -95,6 +103,14 @@
 
   body {
     overflow: hidden;
+  }
+
+  .accent-color-text {
+    color: #7C1344 !important;
+  }
+
+  .accent-color-border {
+    border-color: #7C1344 !important;
   }
 
   .subtext {

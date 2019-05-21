@@ -5,16 +5,27 @@
       <div class="card-body pt-1 pb-1">
         <div v-if="!hasImages" class="text-center row m-2">
           <div class="col">
-            No data.
+            <span class="mr-2">No data loaded yet.</span> <font-awesome :icon="'sync-alt'"></font-awesome>
           </div>
         </div>
 
         <template v-if="hasImages">
-          <div class="row text-center" id="loadInfo" v-if="imageBuffer.length > 0">
+
+          <div class="row text-center mb-4">
             <div class="col">
-              <button class="btn btn-danger p-0 pl-2 pr-2" @click="flushBuffer">{{imageBuffer.length}}</button>
+              <span class="mr-3 text-secondary h6">Last Updated: {{formattedUpdate}}</span>
+
+              <button class="btn btn-outline-primary border-0 pl-3 pr-3 text-secondary" @click="paused=!paused">
+                <span v-if="paused">
+                  <span class="font-weight-bolder mr-2">+{{imageBuffer.length}}</span> <font-awesome :icon="'sync-alt'"></font-awesome>
+                </span>
+                <span v-else>
+                   <font-awesome :icon="'pause'"></font-awesome>
+                </span>
+              </button>
             </div>
           </div>
+
           <div v-for="(image, index) in images" :key="image.id" class="row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
             <!-- This arrangement is not particularly elegant and stems from the reasons that by design one tag is left and one right -->
 
@@ -75,6 +86,7 @@
   import cb from "./Busy";
   import imageStore from "../../store/images";
   import event from "./../../config/events.json";
+  //import * as moment from "moment";
 
   export default {
     name: "cala-imagelist",
@@ -91,6 +103,9 @@
         },
         images: [],
         imageBuffer: [],
+        paused: false,
+        lastUpdate: Date.now(),
+        formattedUpdate: "D.M.YYYY | HH:mm",
         take: 10,
         loaded: false,
         busy: false
@@ -105,6 +120,14 @@
           this.load();
         }
       },
+      lastUpdate(val) {
+        this.formattedUpdate = "D.M.YYYY | HH:mm";
+      },
+      paused(val) {
+        if (!val) {
+          this.flushBuffer();
+        }
+      }
     },
     computed: {
       hasImages: function() {
@@ -131,7 +154,7 @@
       unlabel(image) {
         alert("Insert implementation");
       },
-      tagImage(image, tag, index) {
+      tagImage(image, tag) {
         this.busy = true;
         imageStore.tagImage({imageId: image.id, tagId: tag.id})
           .then(() => {
@@ -206,42 +229,22 @@
     mounted() {
       this.load();
       this.$socket.on("broadcast-image-upload", (image) => {
-        this.mapImage(image).then(image2 => this.imageBuffer.push(image2));
+        this.mapImage(image).then(image2 => {
+          if (this.paused) {
+            this.imageBuffer.push(image2);
+          } else {
+            this.pushImage(image2);
+          }
+        });
       });
     }
   }
 </script>
 
 <style scoped>
-  #loadInfo {
-    position: absolute;
-    z-index: 10;
-    margin: 0 auto;
-    left: 0;
-    right: 0;
-    top: 0;
-  }
-
-  .shadow-sm {
-    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .35) !important;
-  }
-
   .btn-lg {
     min-width: 6em;
     box-shadow: 0 0 1px 0px white inset, 0px 0px 1px 2px white;
-  }
-
-  .progress {
-    max-width: 12em;
-    height: 2em;
-    border-radius: 0;
-    top: .3em;
-    position: absolute;
-    z-index: 1;
-  }
-
-  .shadow-sm {
-    box-shadow: 0 .025rem .15rem rgba(0, 0, 0, .35) !important;
   }
 
   .btn-outline-primary {
@@ -257,6 +260,15 @@
     object-fit: contain;
     height: 140px;
     width: 140px;
+  }
+
+  .progress {
+    max-width: 12em;
+    height: 2em;
+    border-radius: 0;
+    top: .3em;
+    position: absolute;
+    z-index: 1;
   }
 
   .btn-tag {
