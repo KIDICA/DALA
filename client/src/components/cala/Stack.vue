@@ -2,13 +2,13 @@
   <div class="h-100">
     <cala-busy ref="busy"></cala-busy>
 
-    <div class="h-100 w-100 align-middle" style="position: relative">
-      <img
-          v-bind:src="image.thumbnailUrl"
-          v-bind:class="'img-thumbnail ' + image.className"
-          v-bind:style="{transform: 'rotate(' + image.rot + 'deg) translateX(' + image.offsetX + 'px) translateY(' + image.offsetY + 'px)' , zIndex: index}"
-          v-for="(image, index) in images"
-          :key="image.id"/>
+    <div class="h-100 w-100 align-middle overflow-hidden text-center">
+      <div class="image" v-for="(image, index) in images" :key="image.id" v-bind:style="{transform: 'rotate(' + image.rot + 'deg) translateX(' + image.offsetX + 'px) translateY(' + image.offsetY + 'px)' , zIndex: 2*index}">
+        <img v-bind:src="image.thumbnailUrl" class="img-thumbnail"/>
+        <button @click="destroyImage(image)" class="btn position-absolute" style="right: 4em; top: .5em;" v-bind:style="{zIndex: (2*index)+1}">
+          <font-awesome :icon="'times'" class="h4 text-white"></font-awesome>
+        </button>
+      </div>
     </div>
 
     <cala-toolbar v-if="tags.length>0">
@@ -92,6 +92,22 @@
       }
     },
     methods: {
+      destroyImage(image) {
+        if (!window.confirm("Delete snapshot?")) {
+          return;
+        }
+        this.busy = true;
+        images.destroy(image)
+          .then(() => {
+            this.$socket.emit(event.socket.broadcast.image.remove, image);
+            setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 700);
+            this.busy = false;
+          })
+          .catch(error => {
+            alert(error);
+            this.busy = false;
+          });
+      },
       capture() {
         this.$router.push({path: "/capture"});
       },
@@ -155,9 +171,7 @@
         // Simulate random image stack.
         image.rot = mathHelper.randomInt(-5, 5);
         image.offsetX = mathHelper.randomInt(-50, 50);
-        image.offsetY = mathHelper.randomInt(-10, 10) + (document.body.clientHeight / 8);
-        // Used for animation.
-        image.className = "";
+        image.offsetY = mathHelper.randomInt(-10, 10) + (document.body.clientHeight / 4);
         return image;
       }
     },
@@ -179,16 +193,18 @@
 </script>
 
 <style scoped>
-  img {
-    width: 80%;
-    height: auto;
+  .image {
+    width: auto;
+    height: 100%;
     position: fixed;
     left: 0;
     right: 0;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 10%;
-    box-shadow: 0px 1px 1px 1px rgb(230, 230, 230);
+  }
+
+  .image img {
+    box-shadow: 0px 1px 5px 1px rgb(182, 182, 182);
     border-radius: 2px;
   }
 

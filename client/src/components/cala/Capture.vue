@@ -6,7 +6,7 @@
       <input ref="inputFile" name="file" type="file" accept="image/jpeg,image/jpg,image/png;capture=camera">
     </form>
 
-    <video ref="cam" id="preview" class="bg-light" autoplay="true" playsInline></video>
+    <video ref="cam" class="bg-light" autoplay="true" playsInline></video>
 
     <cala-toolbar>
       <slot>
@@ -126,7 +126,7 @@
     position: fixed;
     width: 100%;
     height: auto;
-    max-height: 84%;
+    max-height: 90%;
   }
 
   .cam {

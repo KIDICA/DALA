@@ -23,6 +23,7 @@
     "graphql-request": "^1.8.2",
     "i": "^0.3.6",
     "jslib-html5-camera-photo": "^3.0.2-beta.0",
+    "moment": "^2.24.0",
     "npm": "^6.9.0",
     "socket.io-client": "^2.2.0",
     "vue": "^2.6.10",

@@ -5,7 +5,8 @@
       <div class="card-body pt-1 pb-1">
         <div v-if="!hasImages" class="text-center row m-2">
           <div class="col">
-            <span class="mr-2">No data loaded yet.</span> <font-awesome :icon="'sync-alt'"></font-awesome>
+            <span class="mr-2">No data loaded yet.</span>
+            <font-awesome :icon="'sync-alt'"></font-awesome>
           </div>
         </div>
 
@@ -86,7 +87,7 @@
   import cb from "./Busy";
   import imageStore from "../../store/images";
   import event from "./../../config/events.json";
-  //import * as moment from "moment";
+  import * as moment from "moment";
 
   export default {
     name: "cala-imagelist",
@@ -105,7 +106,6 @@
         imageBuffer: [],
         paused: false,
         lastUpdate: Date.now(),
-        formattedUpdate: "D.M.YYYY | HH:mm",
         take: 10,
         loaded: false,
         busy: false
@@ -119,9 +119,6 @@
         if (this.loaded && (this.images.length === 0)) {
           this.load();
         }
-      },
-      lastUpdate(val) {
-        this.formattedUpdate = "D.M.YYYY | HH:mm";
       },
       paused(val) {
         if (!val) {
@@ -142,7 +139,12 @@
         get() {
           return this.$store.state.hasIterations;
         }
-      }
+      },
+      formattedUpdate: {
+        get() {
+          return moment(this.lastUpdate).format("D.M.YYYY | HH:mm");
+        }
+      },
     },
     methods: {
       flushBuffer() {
@@ -229,6 +231,7 @@
     mounted() {
       this.load();
       this.$socket.on("broadcast-image-upload", (image) => {
+        this.lastUpdate = Date.now();
         this.mapImage(image).then(image2 => {
           if (this.paused) {
             this.imageBuffer.push(image2);
