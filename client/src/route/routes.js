@@ -6,6 +6,7 @@
 //import List from "../components/cala/ImageList";
 import Hub from "../components/cala/Hub";
 import Stack from "../components/cala/Stack";
+import Capture from "../components/cala/Capture";
 
 /**
  * {VueRouter} routes, with additional information used for the page layout or navigation bar generation.
@@ -28,6 +29,20 @@ import Stack from "../components/cala/Stack";
  * }]}
  */
 const routes = [
+  {
+    show: false,
+    path: '/capture',
+    component: Capture,
+    nav: {
+      showTitle: false,
+      showLine: false,
+    },
+    layout: {
+      showButtons: false,
+      showSubtitle: false,
+    }
+  },
+
   {
     show: true,
     icon: "camera",

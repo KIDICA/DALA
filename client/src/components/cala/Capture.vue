@@ -1,101 +1,137 @@
 <template>
-  <div class="text-center">
-    <canvas id="preview" ref="preview"></canvas>
-    <button @click="capture" class="btn btn-primary btn-lg">Capture</button>
-    <img ref="capture">
+  <div class="align-middle">
+    <cala-busy ref="busy"></cala-busy>
+
+    <form style="display: none" ref="form" method="post" enctype="multipart/form-data">
+      <input ref="inputFile" name="file" type="file" accept="image/jpeg,image/jpg,image/png;capture=camera">
+    </form>
+
+    <video ref="cam" id="preview" class="bg-light" autoplay="true" playsInline></video>
+
+    <cala-toolbar>
+      <slot>
+        <div class="row">
+          <div class="col"></div>
+          <div class="col-2 text-center p-0">
+            <button class="btn cam mb-1 accent-color-text" @click="capture" v-bind:disabled="busy">
+              <font-awesome icon="camera" class="fa-2x text-white accent-color-text"></font-awesome>
+            </button>
+          </div>
+          <div class="col"></div>
+        </div>
+      </slot>
+    </cala-toolbar>
   </div>
 </template>
 
 <script>
-  /**
-   * @type {Object<string, HTMLElement>} $refs
-   */
+  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
+  import imageHelper from "../../utils/image";
+  import Toolbar from "./Toolbar";
+  import Busy from "./Busy";
+  import event from "./../../config/events.json";
+
   export default {
+    name: "cala-capture",
+    components: {
+      "cala-toolbar": Toolbar,
+      "cala-busy": Busy,
+    },
     data() {
-      return {};
+      return {
+        resourceUrl: this.$base + "api/cala/upload",
+        busy: false,
+      };
+    },
+    watch: {
+      busy(val) {
+        this.$refs.busy.work = val;
+      },
     },
     methods: {
       capture() {
-        this.$refs.preview.toBlob((blob) => {
-          const urlCreator = window.URL || window.webkitURL;
-          const imageUrl = urlCreator.createObjectURL(blob);
-          this.$refs.capture.src = imageUrl;
-        }, "image/jpeg", 0.8);
-      },
-      /**
-       * @static
-       * @param {HTMLCanvasElement} canvas
-       * @param {ImageBitmap} img
-       */
-      drawCanvas(canvas, img) {
-        canvas.width = getComputedStyle(canvas).width.split('px')[0];
-        canvas.height = getComputedStyle(canvas).height.split('px')[0];
-        const ratio = Math.min(canvas.width / img.width, canvas.height / img.height);
-        const x = (canvas.width - img.width * ratio) / 2;
-        const y = (canvas.height - img.height * ratio) / 2;
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, x, y, img.width * ratio, img.height * ratio);
-      },
-      /**
-       * @param mediaStream
-       */
-      gotMedia(mediaStream) {
-        this.track = mediaStream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(this.track);
-        window.addEventListener("beforeunload", function () {
-          mediaStream.getTracks().forEach(track => track.stop());
-        });
+        this.busy = true;
 
-        this.threadId = setInterval(() => {
-          imageCapture.takePhoto()
-            .then(blob => createImageBitmap(blob))
-            .then(imageBitmap => {
-              this.drawCanvas(this.$refs.preview, imageBitmap);
-            }).catch(error => {
-            //clearInterval(id);
+        const settings = this.cameraPhoto.getCameraSettings();
+        settings.imageType = IMAGE_TYPES.JPG;
+        settings.imageCompression = 0.80;
+
+        //this.audio.play();
+        const dataUri = this.cameraPhoto.getDataUri(settings);
+        const blob = imageHelper.dataURItoBlob(dataUri);
+        this.upload(blob)
+          .then(response => {
+            const image = response.data;
+            this.$socket.emit(event.socket.broadcast.image.upload, image);
+            this.message = "Saved.";
+            this.busy = false;
+            setTimeout(() => this.$router.go(-1), 1500);
+          })
+          .catch(error => {
+            this.busy = false;
             this.$log.error(error);
           });
-        }, 3000);
-      }
+      },
+      upload(file) {
+        return new Promise((resolve, reject) => {
+          const formData = new FormData(this.$refs.form);
+          formData.append('file', file, "file.jpg");
+
+          this.$http.post(this.resourceUrl, formData)
+            .then(response => {
+              resolve(response);
+            })
+            .catch(error => {
+              this.$log.error(error);
+              reject(error);
+            });
+        });
+      },
     },
     mounted() {
-      try {
-        const front = true;
+      //this.audio = new Audio("sound/camera.mp3");
+      //this.audio.load();
+      this.cameraPhoto = new CameraPhoto(this.$refs.cam);
 
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-        navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: (front ? "user" : "environment")
-          },
-
-          // Hacky-ish way to retrieve the highest resolution.
-          width: {min: 1024, ideal: 1920, max: 1920},
-          height: {min: 768, ideal: 1080, max: 1080}
-        }).then(result => {
-          this.gotMedia(result);
-        }).catch(error => {
-          this.$log.error("getUserMedia()", error);
+      this.cameraPhoto.startCameraMaxResolution(FACING_MODES.ENVIRONMENT)
+        .then(stream => {
+          this.$log.debug("Camera started");
+          this.camStarted = true;
+        })
+        .catch(error => {
+          alert(error);
+          this.$log.error(error);
         });
-      } catch (e) {
-        alert("exception");
-        this.$log.error(e.message);
-      }
     },
     beforeRouteLeave(to, from, next) {
-      clearInterval(this.threadId);
-      this.track.stop();
-      next();
+      this.cameraPhoto.stopCamera()
+        .then(() => {
+          this.$log.debug('Camera stoped!');
+          next();
+        })
+        .catch((error) => {
+          this.$log.error('No camera to stop!:', error);
+          next();
+        });
     },
   }
 </script>
 
 <style scoped>
-  #preview {
-    padding: 1em;
+  video {
+    left: 0;
+    right: 0;
     margin: 0;
+    padding: 0;
+    position: fixed;
     width: 100%;
-    top: 0em;
-    height: 20em;
+    height: auto;
+    max-height: 84%;
+  }
+
+  .cam {
+    border: 2px solid;
+    border-radius: 2em;
+    padding: 0.5em;
   }
 </style>
