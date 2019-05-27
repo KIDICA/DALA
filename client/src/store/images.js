@@ -8,21 +8,18 @@ export default {
    * @param {string} [param.type]
    * @param {number} [param.take]
    * @param {number} [param.skip]
+   * @param {string} [param.tagId]
    * @returns {Promise<any>}
    */
   all(param = {}) {
-    param.type = param.type || "untagged";
-    param.take = param.take || 10;
-    param.skip = param.skip || 0;
-
     return new Promise((resolve, reject) => {
       net.query(`
         {
-          images(type: ${param.type}, take: ${param.take}, skip: ${param.skip}) {
+          images(type: ${param.type || "any"}, take: ${param.take || 10}, skip: ${param.skip || 0}, tagId: "${param.tagId || ""}") {
             id, created, imageUrl, thumbnailUrl
             tags {
               id, name
-            }
+            }   
           }
         }
       `).then(response => resolve(response.images))

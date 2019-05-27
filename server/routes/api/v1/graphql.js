@@ -40,20 +40,21 @@ const root = {
   },
 
   async images(args) {
-    const type = args.type;
-    const tagId = args.tagId ? [args.tagId] : null;
-    const result =
-      // type argument given?
-      type ?
-        // Which type
-        type === "tagged"
-          ? await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId})
-          : await api.getUntaggedImages({take: args.take, skip: args.skip})
-        // No type argument
-        : (await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId}))
-          .concat(
-            await api.getUntaggedImages({take: args.take, skip: args.skip})
-          );
+    const tagId = (args.tagId && args.tagId !== "") ? [args.tagId] : null;
+    const filterByTagged = args.type !== "any";
+    let result = [];
+
+    if (filterByTagged) {
+      result = args.type === "tagged"
+        ? await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId})
+        : await api.getUntaggedImages({take: args.take, skip: args.skip});
+    } else {
+      // receive all images
+      result = (await api.getTaggedImages({take: args.take, skip: args.skip, tagIds: tagId}))
+        .concat(
+          await api.getUntaggedImages({take: args.take, skip: args.skip})
+        );
+    }
 
     return result.map(image => {
       return {
@@ -142,6 +143,16 @@ const root = {
       await api.deleteImages(args.id);
     } catch (e) {
       throw new Error(e);
+    }
+  },
+
+  async unlabel(args) {
+    try {
+      await api.deleteImageTags([args.imageId]);
+      return true;
+    } catch (ex) {
+      logger.error(ex.message);
+      return false;
     }
   },
 

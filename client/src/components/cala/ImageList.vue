@@ -11,10 +11,9 @@
         </div>
 
         <template v-if="hasImages">
-
           <div class="row text-center mb-4">
             <div class="col">
-              <span class="mr-3 text-secondary h6">Last Updated: {{formattedUpdate}}</span>
+              <span ref="timestamp" class="mr-3 text-secondary h6">Last Updated: {{formattedUpdate}}</span>
 
               <button class="btn btn-outline-primary border-0 pl-3 pr-3 text-secondary" @click="paused=!paused">
                 <span v-if="paused">
@@ -32,18 +31,22 @@
 
             <div class="col pr-0">
               <template v-if="tags.length > 0">
-                <div v-if="!image.hasTags && image.probability" class="progress left bg-secondary w-100 text-right" style="right: 0;">
+                <div v-if="hasIterations" class="progress left bg-transparent w-100 text-right" style="right: 0;">
                   <div v-bind:style="{ width: (image.probability[tags[0].id]*100) + '%'}" class="progress-bar bg-success" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                    <span class="pr-2">{{(image.probability[tags[0].id]*100).toFixed(2)}}%</span>
+                    <span v-if="image.probability[tags[0].id]>0.3" class="pr-2 pl-2" style="min-width: 4rem">{{(image.probability[tags[0].id]*100).toFixed(2)}}%</span>
+                    <span v-else class="pr-2 pl-2 text-dark" style="min-width: 4rem">{{(image.probability[tags[0].id]*100).toFixed(2)}}%</span>
                   </div>
                 </div>
 
-                <button @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="right: 0;">
+                <button v-if="image.tagSet[tags[0].id]" @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-secondary btn-tag" style="right: 0;">
                   {{tags[0].name}}
-                  <font-awesome icon="check" v-if="image.tagSet[tags[0].id]"></font-awesome>
+                  <font-awesome icon="check"></font-awesome>
+                </button>
+                <button v-else @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="right: 0;">
+                  {{tags[0].name}}
                 </button>
 
-                <button class="btn p-0" @click="unlabel(image)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
+                <button class="btn p-0" @click="unlabel(image, index)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
                   <font-awesome icon="times" class="text-primary"></font-awesome>
                   <br/>
                   <small>Unlabel</small>
@@ -57,15 +60,19 @@
 
             <div class="col pl-0">
               <template v-if="tags.length > 0">
-                <div v-if="!image.hasTags && image.probability" class="progress left bg-transparent w-100 text-left" style="left: 0;">
+                <div v-if="hasIterations" class="progress right bg-transparent w-100 text-left" style="left: 0;">
                   <div v-bind:style="{ width: (image.probability[tags[1].id]*100) + '%'}" class="progress-bar bg-primary" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                    <span class="pl-2">{{(image.probability[tags[1].id]*100).toFixed(2)}}%</span>
+                    <span v-if="image.probability[tags[1].id]>0.3" class="pl-2 pr-2 text-white" style="min-width: 4rem">{{(image.probability[tags[1].id]*100).toFixed(2)}}%</span>
+                    <span v-else class="pl-2 pr-2 text-dark" style="min-width: 4rem">{{(image.probability[tags[1].id]*100).toFixed(2)}}%</span>
                   </div>
                 </div>
 
-                <button @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="left: 0;">
+                <button v-if="image.tagSet[tags[1].id]" @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-secondary btn-tag" style="left: 0;">
                   {{tags[1].name}}
-                  <font-awesome icon="check" v-if="image.tagSet[tags[1].id]"></font-awesome>
+                  <font-awesome icon="check"></font-awesome>
+                </button>
+                <button v-else @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="left: 0;">
+                  {{tags[1].name}}
                 </button>
 
                 <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em; font-size: 0.9em;">
@@ -75,8 +82,9 @@
                 </button>
               </template>
             </div>
-
           </div>
+
+          <button v-if="pagination.skip < imageCount" class="btn btn-block btn-primary" @click="more">More</button>
         </template>
       </div>
     </div>
@@ -102,11 +110,15 @@
         button: {
           remove: ((typeof this.removeButton === "undefined") ? true : this.removeButton)
         },
+        pagination: {
+          skip: 0,
+          take: 10,
+        },
         images: [],
+        formattedUpdate: "",
         imageBuffer: [],
         paused: false,
         lastUpdate: Date.now(),
-        take: 10,
         loaded: false,
         busy: false
       };
@@ -140,34 +152,52 @@
           return this.$store.state.hasIterations;
         }
       },
-      formattedUpdate: {
+      voidTag: {
         get() {
-          return moment(this.lastUpdate).format("D.M.YYYY | HH:mm");
+          return this.$store.state.voidTag;
         }
       },
+      imageCount: {
+        get() {
+          return this.$store.state.imageCount;
+        }
+      }
     },
     methods: {
+      unlabel(image, index) {
+        this.$query(`
+            mutation {
+              unlabel(imageId: "${image.id}")
+            }`)
+          .then(result => {
+            if (result.unlabel) {
+              image.tagSet = {};
+              this.$set(this.images, index, image);
+            }
+          });
+      },
+      more() {
+        this.pagination.skip += this.pagination.take;
+        this.load();
+      },
       flushBuffer() {
         const len = this.imageBuffer.length;
         for (let i = 0; i < len; i += 1) {
           this.images.unshift(this.imageBuffer.pop());
         }
       },
-      unlabel(image) {
-        alert("Insert implementation");
-      },
-      tagImage(image, tag) {
+      tagImage(image, tag, index) {
         this.busy = true;
         imageStore.tagImage({imageId: image.id, tagId: tag.id})
           .then(() => {
             this.$socket.emit(event.socket.broadcast.image.tagged, tag);
+            image.tagSet = {};
             image.tagSet[tag.id] = true;
-            image.hasTags = true;
-            setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 2000);
+            this.$set(this.images, index, image);
             this.busy = false;
           });
       },
-      deleteImage(image, index) {
+      deleteImage(image) {
         if (!window.confirm("Delete image?")) {
           return;
         }
@@ -181,31 +211,27 @@
       },
       mapImage(image) {
         return new Promise(resolve => {
-          // Only predict when we don't have any tags.
-          image.hasTags = image.tags !== null;
           image.tagSet = {};
-          image.className = "bounceInLeft";
-          if (!image.hasTags) {
-            if (this.hasIterations) {
-              imageStore.predictUrl(image.imageUrl)
-                .then(probabilities => {
-                  let ps = {};
-                  probabilities.forEach(p => ps[p.tag.id] = p.probability);
-                  image.probability = ps;
-                  resolve(image);
-                })
-                .catch(error => {
-                  this.$log.error(error);
-                  if (error === "Nothing trained yet") {
-                    resolve(image);
-                  }
-                });
-              return;
-            }
-            resolve(image);
-            return;
-          } else {
+          image.className = "";
+          if (image.tags) {
             image.tags.forEach(tag => image.tagSet[tag.id] = true);
+          }
+
+          if (this.hasIterations) {
+            imageStore.predictUrl(image.imageUrl)
+              .then(probabilities => {
+                const ps = {};
+                probabilities.forEach(p => ps[p.tag.id] = p.probability);
+                image.probability = ps;
+                resolve(image);
+              })
+              .catch(error => {
+                this.$log.error(error);
+                if (error === "Nothing trained yet") {
+                  resolve(image);
+                }
+              });
+            return;
           }
           resolve(image);
         });
@@ -219,18 +245,23 @@
       load() {
         this.busy = true;
         this.loaded = false;
-        imageStore.all({take: this.take})
-          .then(images => {
-            images.reverse()
-              .forEach(image => this.mapImage(image).then(this.pushImage));
-            this.loaded = true;
-            this.busy = false;
-          });
+        this.images = [];
+        requestAnimationFrame(() => {
+          imageStore.all(this.pagination)
+            .then(images => {
+              images.reverse().forEach(image => this.mapImage(image).then(this.pushImage));
+              this.loaded = true;
+              this.busy = false;
+            });
+        });
+      },
+      computeLastUpdate() {
+        this.formattedUpdate = moment(this.lastUpdate).fromNow();
       }
     },
     mounted() {
       this.load();
-      this.$socket.on("broadcast-image-upload", (image) => {
+      this.$socket.on(event.socket.broadcast.image.upload, (image) => {
         this.lastUpdate = Date.now();
         this.mapImage(image).then(image2 => {
           if (this.paused) {
@@ -240,6 +271,11 @@
           }
         });
       });
+
+      this.computeLastUpdate();
+      this.threadId = setInterval(() => {
+        this.computeLastUpdate();
+      }, 1000);
     }
   }
 </script>
@@ -278,5 +314,13 @@
     position: absolute;
     top: 1.3em;
     padding: 0.5em 1.6em;
+  }
+
+  .progress.left {
+    direction: rtl;
+  }
+
+  .progress.right {
+    direction: ltr;
   }
 </style>

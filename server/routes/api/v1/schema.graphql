@@ -1,12 +1,13 @@
 type Mutation {
     tagImage(tagId: ID!, imageId: ID!): TagInfo!
     deleteImage(id: ID!): Image
+    unlabel(imageId: ID!): Boolean
 }
 
 type Query {
     tagCounts: TagCounts
     image(id: ID!): Image
-    images(type: ImageType, take: Int, skip: Int, tagId: ID): [Image]
+    images(type: ImageType!, take: Int = 10, skip: Int = 0, tagId: ID): [Image]
     tags: [Tag]
     iterations: [Iteration]
     predictUrl(url: String!): [Prediction],
@@ -17,7 +18,7 @@ type Query {
     performance: IterationPerformance
 }
 
-enum ImageType { tagged, untagged }
+enum ImageType { tagged, untagged, any }
 
 type TagInfo {
     tagId: ID
@@ -61,6 +62,7 @@ type Tag {
 type TagCounts {
     tagged: Int!
     untagged: Int!
+    void: Int!
 }
 
 type Iteration {
