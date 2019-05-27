@@ -5,13 +5,6 @@
 <script>
   import Chartist from "chartist";
 
-  function randomData() {
-    return {
-      labels: new Array(5).fill(0).map((v, i) => "T-" + i),
-      series: new Array(6).fill(0).map(() => new Array(5).fill(0).map((e, i) => Math.random() * 100)),
-    }
-  }
-
   export default {
     name: "cala-line-chart",
     data() {
@@ -52,21 +45,21 @@
             high: 100,
             axisY: {
               showGrid: false,
-              showLabel: false,
+              showLabel: true,
             },
             axisX: {
               showGrid: true,
-              showLabel: false,
+              showLabel: true,
             },
             showArea: true,
             showPoint: true,
             fullWidth: true,
             lineSmooth: true,
             chartPadding: {
-              top: 5,
+              top: 35,
               right: 5,
-              bottom: -25,
-              left: -35
+              bottom: 25,
+              left: 35
             },
           }
         );
