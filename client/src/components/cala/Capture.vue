@@ -7,6 +7,7 @@
     </form>
 
     <video ref="cam" class="bg-light" autoplay="true" playsInline></video>
+    <audio style="display: none" ref="click" src="./sound/camera.mp3" ></audio>
 
     <cala-toolbar>
       <slot>
@@ -51,19 +52,19 @@
     methods: {
       capture() {
         this.busy = true;
+        this.$refs.click.play();
 
         const settings = this.cameraPhoto.getCameraSettings();
         settings.imageType = IMAGE_TYPES.JPG;
         settings.imageCompression = 0.80;
 
-        //this.audio.play();
         const dataUri = this.cameraPhoto.getDataUri(settings);
+        this.$refs.cam.pause();
         const blob = imageHelper.dataURItoBlob(dataUri);
         this.upload(blob)
           .then(response => {
             const image = response.data;
             this.$socket.emit(event.socket.broadcast.image.upload, image);
-            this.message = "Saved.";
             this.busy = false;
             setTimeout(() => this.$router.go(-1), 1500);
           })
@@ -89,14 +90,11 @@
       },
     },
     mounted() {
-      //this.audio = new Audio("sound/camera.mp3");
-      //this.audio.load();
       this.cameraPhoto = new CameraPhoto(this.$refs.cam);
 
       this.cameraPhoto.startCameraMaxResolution(FACING_MODES.ENVIRONMENT)
         .then(stream => {
           this.$log.debug("Camera started");
-          this.camStarted = true;
         })
         .catch(error => {
           alert(error);
@@ -106,11 +104,11 @@
     beforeRouteLeave(to, from, next) {
       this.cameraPhoto.stopCamera()
         .then(() => {
-          this.$log.debug('Camera stoped!');
+          this.$log.debug('Camera stopped');
           next();
         })
         .catch((error) => {
-          this.$log.error('No camera to stop!:', error);
+          this.$log.error('No camera to stop:', error);
           next();
         });
     },
