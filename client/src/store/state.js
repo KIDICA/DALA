@@ -14,6 +14,9 @@ const store = new Vuex.Store({
     // Exchange of currently taken pictures.
     imageBuffer: [],
     tags: [],
+    allTags: [],
+    voidTag: undefined,
+    performance: {averagePrecision: 0},
     labeled: 0,
     imageCount: 0,
     hasIterations: false,
@@ -34,7 +37,13 @@ const store = new Vuex.Store({
       state.tags.push(tag);
     },
     updateTags(state, tags) {
-      state.tags = tags;
+      state.tags = tags.filter(tag => tag.name !== "void");
+      state.allTags = tags;
+
+      const voidTag = tags.filter(tag => tag.name === "void");
+      if (voidTag.length > 0) {
+        state.voidTag = voidTag[0];
+      }
     },
     updateHasIterations(state, hasIterations) {
       state.hasIterations = hasIterations;
@@ -70,13 +79,31 @@ const store = new Vuex.Store({
           tag.imageCount = (tag.imageCount || 0) + 1;
         }
       })
+    },
+    updatePerformance(state, performance) {
+      state.performance.averagePrecision = performance.averagePrecision;
     }
   },
-
   actions: {
     queryHasIterations({commit}) {
       network.query(`{ iterations { id }}`)
         .then(result => commit("updateHasIterations", result.iterations.length > 0));
+    },
+    queryPerformance({commit}) {
+      network.query(`
+          {
+            performance {
+              averagePrecision
+            }
+          }
+        `)
+        .then(result => {
+          commit("updatePerformance", result.performance);
+        })
+        .catch(result => {
+          // Might be only no performance data yet.
+          window.console.debug(result);
+        });
     },
     queryCounts({commit}) {
       network.query(`
@@ -86,7 +113,10 @@ const store = new Vuex.Store({
           }
         }`)
         .then(data => {
-          commit("updateCount", {labeled: data.tagCounts.tagged, unlabeled: data.tagCounts.untagged});
+          commit("updateCount", {
+            labeled: data.tagCounts.tagged,
+            unlabeled: data.tagCounts.untagged
+          });
           commit("setImageCount", data.tagCounts.tagged + data.tagCounts.untagged)
         });
     },

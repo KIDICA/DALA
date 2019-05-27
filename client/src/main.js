@@ -59,11 +59,14 @@ Vue.prototype.$http = axios.create({baseURL: env.urls.http});
 Vue.prototype.$query = network.query;
 Vue.prototype.$socket = socket;
 
+const error = window.console.error;
+
 Vue.config.errorHandler = function(err) {
+  socket.emit(event.socket.clientError, err);
+  window.console.error(err);
   alert("Exception: " + err);
 };
 
-const error = window.console.error;
 window.console.error = function(...args) {
   alert(args);
   socket.emit(event.socket.clientError, args);
@@ -84,6 +87,7 @@ new Vue({
     this.$store.dispatch("queryTags");
     this.$store.dispatch("queryCounts");
     this.$store.dispatch("queryHasIterations");
+    this.$store.dispatch("queryPerformance");
 
     this.$socket.on(event.socket.broadcast.image.upload, () => {
       this.$store.commit("incrementImageCount");
