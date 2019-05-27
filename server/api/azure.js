@@ -17,7 +17,7 @@ const pred = new PredictionApiClient(config.predictionKey, config.endPoint);
 // All queries will first be queue and executed after an certain interval.
 /** @type {[{Function}]} Global management, this is not instance bound. */
 const apiQueue = [];
-const dequeueInterval = 100;
+const dequeueInterval = 150;
 
 const time = require("../utils/time");
 
@@ -43,7 +43,16 @@ function Azure() {
   this.iterations = [];
   /** @type {Number} The API allows a fixed number of training iterations. If we want to add new ones, we need to delete the old ones. */
   this.maxIterationCount = 10;
+  /** @type {Tag[]} */
+  this.tags = [];
 }
+
+/**
+ * True when currently a training is in progress.
+ * @static
+ * @type {boolean}
+ */
+Azure.isTraining = false;
 
 /**
  * @param {Function} callback
@@ -88,13 +97,15 @@ Azure.prototype.init = function(projectId) {
     enqueue(trainer => {
       Promise.all([
         trainer.getProject(id),
-        trainer.getIterations(id)
+        trainer.getIterations(id),
+        trainer.getTags(id)
       ]).then(values => {
         const project = values[0];
         // Order from old to new.
         const iterations = values[1].sort((it1, it2) => it1.created - it2.created);
         this.iterations = iterations; // May be empty if nothing trained yet.
         this.project = project;
+        this.tags = values[2];
 
         resolve(this);
       }).catch(error => {
@@ -295,6 +306,13 @@ Azure.prototype.getImageById = function(id) {
 };
 
 /**
+ * @returns {Tag}
+ */
+Azure.prototype.voidTag = function() {
+  return this.tags.filter(tag => tag.name === "void")[0];
+};
+
+/**
  * @param {Object} param
  * @param {String} param.filepath
  * @param {String[]} [param.tags] Tag ids.
@@ -393,14 +411,18 @@ Azure.prototype.tagImage = function(tagData) {
 };
 
 /**
- * @returns {Promise<any>}
+ * @param {String[]} imageId
+ * @returns {Promise<void>}
  */
-Azure.prototype.removeTagsFromImages = function() {
+Azure.prototype.deleteImageTags = function(imageIds) {
   return new Promise((resolve, reject) => {
     enqueue(trainer => {
-      trainer.deleteImageTags(this.project.id, this.imageIds, this.tagIds)
-        .then(result => resolve(result))
-        .catch(error => reject(error));
+      trainer.getTags(this.project.id)
+        .then(tags => {
+          trainer.deleteImageTags(this.project.id, imageIds, tags.map(tag => tag.id))
+            .then(resolve)
+            .catch(reject);
+        }).catch(reject);
     });
   });
 };
@@ -437,6 +459,10 @@ Azure.prototype.deleteIteration = function(it) {
 Azure.prototype.train = async function(status) {
   return new Promise(async (resolve, reject) => {
     try {
+      if (Azure.isTraining) {
+        reject("Training already in progress");
+        return;
+      }
       this.getIterations()
         .then(its => {
           const exceededIterations = its.length >= this.maxIterationCount;
@@ -468,8 +494,8 @@ Azure.prototype.train = async function(status) {
  */
 Azure.prototype.startTraining = function(status) {
   return new Promise((resolve, reject) => {
-
     enqueue(trainer => {
+      Azure.isTraining = true;
       trainer.trainProject(this.project.id)
         .then(async trainingIteration => {
           logger.debug("Training started...");
@@ -481,6 +507,7 @@ Azure.prototype.startTraining = function(status) {
             await setTimeoutPromise(1500, null);
             trainingIteration = await trainer.getIteration(this.project.id, trainingIteration.id)
           }
+          Azure.isTraining = false;
 
           if (typeof status === "function") {
             status(trainingIteration);
@@ -499,19 +526,23 @@ Azure.prototype.startTraining = function(status) {
                     .then(its => {
                       this.iterations = its;
                       resolve(trainingIteration);
+                      Azure.isTraining = false;
                     }).catch(error => reject(error));
                 })
                 .catch(error => {
+                  Azure.isTraining = false;
                   logger.error(error);
                   reject(error);
                 });
             })
             .catch(error => {
+              Azure.isTraining = false;
               logger.error(error);
               reject(error);
             })
         })
         .catch(error => {
+          Azure.isTraining = false;
           logger.error(error);
           reject(error);
         });
