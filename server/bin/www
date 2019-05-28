@@ -61,9 +61,9 @@ io.on("connection", socket => {
     socket.emit(event.socket.broadcast.image.upload, image);
   });
 
-  socket.on(event.socket.broadcast.image.tagged, tag => {
-    socket.broadcast.emit(event.socket.broadcast.image.tagged, tag);
-    socket.emit(event.socket.broadcast.image.tagged, tag);
+  socket.on(event.socket.broadcast.image.tagged, tagAndImage => {
+    socket.broadcast.emit(event.socket.broadcast.image.tagged, tagAndImage);
+    socket.emit(event.socket.broadcast.image.tagged, tagAndImage);
   });
 
   socket.on(event.socket.broadcast.image.remove, image => {

@@ -26,7 +26,7 @@
             </div>
           </div>
 
-          <div v-for="(image, index) in images" :key="image.id" class="row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
+          <div v-for="(image, index) in images" :key="image.id" class="item row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
             <!-- This arrangement is not particularly elegant and stems from the reasons that by design one tag is left and one right -->
 
             <div class="col pr-0">
@@ -38,16 +38,13 @@
                   </div>
                 </div>
 
-                <button v-if="image.tagSet[tags[0].id]" @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-secondary btn-tag" style="right: 0;">
+                <button @click="tagImage(image, tags[0], index, $event)" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[0].id], 'btn-outline-primary': !image.tagSet[tags[0].id]}" style="right: 0;">
                   {{tags[0].name}}
-                  <font-awesome icon="check"></font-awesome>
-                </button>
-                <button v-else @click="tagImage(image, tags[0], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="right: 0;">
-                  {{tags[0].name}}
+                  <font-awesome v-if="image.tagSet[tags[0].id]" icon="check"></font-awesome>
                 </button>
 
-                <button class="btn p-0" @click="unlabel(image, index)" style="position:absolute; bottom: 0; right: 1em; font-size: 0.9em;">
-                  <font-awesome icon="times" class="text-primary"></font-awesome>
+                <button class="btn p-0" @click="unlabel(image, index)" style="position:absolute; bottom: 0; right: 1em;">
+                  <font-awesome icon="times" style="font-size: 1.2em;" class="text-primary"></font-awesome>
                   <br/>
                   <small>Unlabel</small>
                 </button>
@@ -67,15 +64,12 @@
                   </div>
                 </div>
 
-                <button v-if="image.tagSet[tags[1].id]" @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-secondary btn-tag" style="left: 0;">
+                <button @click="tagImage(image, tags[1], index, $event)" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[1].id], 'btn-outline-primary': !image.tagSet[tags[1].id]}" style="left: 0;">
                   {{tags[1].name}}
-                  <font-awesome icon="check"></font-awesome>
-                </button>
-                <button v-else @click="tagImage(image, tags[1], index)" class="btn btn-lg font-weight-bolder btn-outline-primary btn-tag" style="left: 0;">
-                  {{tags[1].name}}
+                  <font-awesome v-if="image.tagSet[tags[1].id]" icon="check"></font-awesome>
                 </button>
 
-                <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em; font-size: 0.9em;">
+                <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em;">
                   <font-awesome icon="trash" class="text-primary"></font-awesome>
                   <br/>
                   <small>Delete</small>
@@ -96,6 +90,7 @@
   import imageStore from "../../store/images";
   import event from "./../../config/events.json";
   import * as moment from "moment";
+  import animation from "./../../utils/animation";
 
   export default {
     name: "cala-imagelist",
@@ -108,7 +103,7 @@
     data() {
       return {
         button: {
-          remove: ((typeof this.removeButton === "undefined") ? true : this.removeButton)
+          remove: ((typeof this.removeButton === "undefined") ? true : this.removeButton),
         },
         pagination: {
           skip: 0,
@@ -120,7 +115,7 @@
         paused: false,
         lastUpdate: Date.now(),
         loaded: false,
-        busy: false
+        busy: false,
       };
     },
     watch: {
@@ -136,7 +131,12 @@
         if (!val) {
           this.flushBuffer();
         }
-      }
+      },
+      $route() {
+        if (this.threadId) {
+          clearInterval(this.threadId);
+        }
+      },
     },
     computed: {
       hasImages: function() {
@@ -150,18 +150,18 @@
       hasIterations: {
         get() {
           return this.$store.state.hasIterations;
-        }
+        },
       },
       voidTag: {
         get() {
           return this.$store.state.voidTag;
-        }
+        },
       },
       imageCount: {
         get() {
           return this.$store.state.imageCount;
-        }
-      }
+        },
+      },
     },
     methods: {
       unlabel(image, index) {
@@ -186,15 +186,22 @@
           this.images.unshift(this.imageBuffer.pop());
         }
       },
-      tagImage(image, tag, index) {
+      tagImage(image, tag, index, $event) {
         this.busy = true;
+        this.images[index].busy = true;
         imageStore.tagImage({imageId: image.id, tagId: tag.id})
           .then(() => {
-            this.$socket.emit(event.socket.broadcast.image.tagged, tag);
+            this.$socket.emit(event.socket.broadcast.image.tagged, {image, tag});
             image.tagSet = {};
             image.tagSet[tag.id] = true;
             this.$set(this.images, index, image);
+            this.images[index].busy = true;
             this.busy = false;
+            animation.pulse($event.target);
+          })
+          .catch(error => {
+            alert(error);
+            this.images[index].busy = true;
           });
       },
       deleteImage(image) {
@@ -205,7 +212,7 @@
         imageStore.destroy(image)
           .then(() => {
             this.$socket.emit(event.socket.broadcast.image.remove, image);
-            setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 700);
+            setTimeout(() => this.removeImage(image), 700);
             this.busy = false;
           });
       },
@@ -213,6 +220,7 @@
         return new Promise(resolve => {
           image.tagSet = {};
           image.className = "";
+          image.busy = false;
           if (image.tags) {
             image.tags.forEach(tag => image.tagSet[tag.id] = true);
           }
@@ -233,6 +241,7 @@
               });
             return;
           }
+
           resolve(image);
         });
       },
@@ -246,38 +255,72 @@
         this.busy = true;
         this.loaded = false;
         this.images = [];
-        requestAnimationFrame(() => {
-          imageStore.all(this.pagination)
-            .then(images => {
-              images.reverse().forEach(image => this.mapImage(image).then(this.pushImage));
-              this.loaded = true;
-              this.busy = false;
-            });
-        });
+        imageStore.all(this.pagination)
+          .then(images => {
+            images.reverse().forEach(image => this.mapImage(image).then(this.pushImage));
+            this.loaded = true;
+            this.busy = false;
+          });
       },
       computeLastUpdate() {
         this.formattedUpdate = moment(this.lastUpdate).fromNow();
-      }
+      },
+      /**
+       *
+       * @param {{id: String}} image
+       * @param {Function<{}>} fn
+       */
+      updateImage(findImage, fn) {
+        for (let i = 0; i < this.images.length; i += 1) {
+          const image = this.images[i];
+          if (image.id === findImage.id) {
+            const result = fn(image);
+            this.$set(this.images, i, result);
+            break;
+          }
+        }
+      },
+      /**
+       * @param {{id: String}} image
+       */
+      removeImage(image) {
+        this.images.splice(this.images.indexOf(image), 1);
+      },
+      listen() {
+        this.$socket.on(event.socket.broadcast.image.remove, image => {
+          this.removeImage(image);
+        });
+
+        this.$socket.on(event.socket.broadcast.image.tagged, tagAndImage => {
+          this.updateImage(tagAndImage.image, image => {
+            image.tagSet[tagAndImage.tag.id] = true;
+            return image;
+          });
+        });
+
+        this.$socket.on(event.socket.broadcast.image.upload, (image) => {
+          this.lastUpdate = Date.now();
+          this.mapImage(image).then(image2 => {
+            if (this.paused) {
+              this.imageBuffer.push(image2);
+            } else {
+              this.pushImage(image2);
+            }
+          });
+        });
+      },
     },
     mounted() {
       this.load();
-      this.$socket.on(event.socket.broadcast.image.upload, (image) => {
-        this.lastUpdate = Date.now();
-        this.mapImage(image).then(image2 => {
-          if (this.paused) {
-            this.imageBuffer.push(image2);
-          } else {
-            this.pushImage(image2);
-          }
-        });
-      });
+      this.listen();
 
+      // Update last update display continuously.
       this.computeLastUpdate();
       this.threadId = setInterval(() => {
         this.computeLastUpdate();
-      }, 1000);
-    }
-  }
+      }, 5000);
+    },
+  };
 </script>
 
 <style scoped>

@@ -103,10 +103,10 @@ new Vue({
       this.$store.commit("incrementImageCount", -1);
     });
 
-    this.$socket.on(event.socket.broadcast.image.tagged, tag => {
+    this.$socket.on(event.socket.broadcast.image.tagged, tagAndImage => {
       this.$store.commit("incrementLabeledCount");
       this.$store.commit("incrementUnlabeledCount", -1);
-      this.$store.commit("updateTagCounts", tag);
+      this.$store.commit("updateTagCounts", tagAndImage.tag);
     });
   }
 }).$mount("#app");
