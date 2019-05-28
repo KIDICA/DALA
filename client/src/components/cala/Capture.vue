@@ -14,8 +14,8 @@
         <div class="row">
           <div class="col"></div>
           <div class="col-2 text-center p-0">
-            <button class="btn cam mb-1 accent-color-text" @click="capture" v-bind:disabled="busy">
-              <font-awesome icon="camera" class="fa-2x text-white accent-color-text"></font-awesome>
+            <button class="btn cam mb-1 text-primary" @click="capture" v-bind:disabled="busy">
+              <font-awesome icon="camera" class="fa-2x text-white text-primary"></font-awesome>
             </button>
           </div>
           <div class="col"></div>

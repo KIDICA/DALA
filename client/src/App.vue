@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <cala-nav title="CALA" ref="nav" v-bind:show-line="showLine">
+    <cala-nav title="DALA" ref="nav" v-bind:show-line="showLine">
       <slot>
         <div class="btn-group btn-group-sm float-right p-1" role="group" v-if="showButtons">
           <template v-for="route in routes">
@@ -30,33 +30,33 @@
   import routes from "./route/routes";
 
   export default {
-    name: 'app',
+    name: "app",
     components: {
-      "cala-nav": cn
+      "cala-nav": cn,
     },
     data() {
       return {
-        title: "CALA",
+        title: "DALA",
         showLine: true,
         routes,
         showSubtitle: false,
-        showButtons: false
-      }
+        showButtons: false,
+      };
     },
     computed: {
       count: {
         get() {
-          return this.$store.state.count
+          return this.$store.state.count;
         },
         set(count) {
           this.$store.state.count = count;
-        }
-      }
+        },
+      },
     },
     watch: {
       $route(to) {
         this.updateNav(to);
-      }
+      },
     },
     methods: {
       /**
@@ -68,7 +68,7 @@
         if (route.nav) {
           Object.keys(route.nav)
             .forEach(key => {
-              this.$refs.nav.param[key] = route.nav[key]
+              this.$refs.nav.param[key] = route.nav[key];
             });
         }
 
@@ -76,12 +76,12 @@
           Object.keys(route.layout)
             .forEach(key => this[key] = route.layout[key]);
         }
-      }
+      },
     },
     mounted() {
       this.updateNav(this.$route);
-    }
-  }
+    },
+  };
 </script>
 
 <style>
@@ -103,14 +103,6 @@
 
   body {
     overflow: hidden;
-  }
-
-  .accent-color-text {
-    color: #7C1344 !important;
-  }
-
-  .accent-color-border {
-    border-color: #7C1344 !important;
   }
 
   .subtext {
