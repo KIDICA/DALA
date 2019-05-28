@@ -57,8 +57,6 @@
     }
   },
   "browserslist": [
-    "defaults",
-    "iOS",
-    "Android"
+    "defaults"
   ]
 }
