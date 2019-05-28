@@ -20,8 +20,9 @@
                 <span class="text-dark pl-2 pr-2">{{tags[0].probabilityPercent}}%</span>
               </div>
             </div>
-            <button v-bind:disabled="busy" class="float-left w-100 ml-1 mt-1 btn tag btn-outline-primary bg-white text-primary btn-lg" @click="tagImage(tags[0])">
+            <button ref="leftButton" v-bind:disabled="busy" v-bind:class="{'btn-secondary': tagged.left, 'btn-outline-primary bg-white text-primary ': !tagged.left}" class="float-left w-100 ml-1 mt-1 btn tag btn-lg" @click="tagImage(tags[0])">
               {{tags[0].name}}
+              <font-awesome v-if="tagged.left" icon="check"></font-awesome>
             </button>
           </div>
 
@@ -38,8 +39,9 @@
                 <span class=" pl-2 pr-2 text-dark" v-if="tags[1].probability<=0.3">{{tags[1].probabilityPercent}}%</span>
               </div>
             </div>
-            <button v-bind:disabled="busy" class="w-100 float-right mr-1 mt-1 btn tag btn-outline-primary bg-white text-primary btn-lg" @click="tagImage(tags[1])">
+            <button ref="rightButton" v-bind:disabled="busy" v-bind:class="{'btn-secondary': tagged.right, 'btn-outline-primary bg-white text-primary ': !tagged.right}" class="w-100 float-right mr-1 mt-1 btn tag btn-lg" @click="tagImage(tags[1])">
               {{tags[1].name}}
+              <font-awesome v-if="tagged.right" icon="check"></font-awesome>
             </button>
           </div>
         </div>
@@ -54,6 +56,8 @@
   import mathHelper from "../../utils/math";
   import Toolbar from "./Toolbar";
   import event from "./../../config/events.json";
+  import Hammer from "hammerjs";
+  import animation from "./../../utils/animation";
 
   export default {
     name: "cala-stack",
@@ -63,15 +67,22 @@
     },
     data() {
       return {
+        tagged: {
+          left: false,
+          right: false,
+        },
         images: [],
         busy: true,
-        resourceUrl: this.$base + "api/cala/upload"
+        resourceUrl: this.$base + "api/cala/upload",
       };
     },
     watch: {
       busy(val) {
         this.$refs.busy.work = val;
-      }
+      },
+      $route() {
+        this.manager.destroy();
+      },
     },
     computed: {
       hasImages: function() {
@@ -83,24 +94,23 @@
       voidTag: {
         get() {
           return this.$store.state.voidTag;
-        }
+        },
       },
       tags: {
         get() {
           return this.$store.state.tags.map((tag, index) => {
-            // Animation direction, first tag to the left, second to the right.
-            tag.animate = index === 0 ? "left" : "right";
+            tag.position = index === 0 ? "left" : "right";
             tag.probability = 0;
             tag.probabilityPercent = 0;
             return tag;
           });
-        }
+        },
       },
       ap: {
         get() {
           return this.$store.state.performance.averagePrecision;
-        }
-      }
+        },
+      },
     },
     methods: {
       destroyImage(image) {
@@ -122,8 +132,15 @@
       capture() {
         this.$router.push({path: "/capture"});
       },
+      /**
+       * @param {{id: String, position: String}} tag
+       */
       tagImage(tag) {
+        if (this.busy) {
+          return;
+        }
         this.busy = true;
+        this.tagged[tag.position] = true;
 
         this.$query(`
           mutation {
@@ -133,16 +150,21 @@
             }
           }
         `).then(() => {
-          this.$socket.emit(event.socket.broadcast.image.tagged, tag);
-          //const className = "animated " + (tag.animate === "left" ? "bounceOutLeft" : "bounceOutRight");
-          //this.images[this.images.length - 1].className = className;
+          this.tagged[tag.position] = true;
+          animation.pulse(this.$refs[tag.position + "Button"]);
+
+          this.$socket.emit(event.socket.broadcast.image.tagged, {tag, image: this.topMostImage});
           setTimeout(() => {
-            this.images.pop();
-            if (this.images.length === 0) {
-              this.load();
-            } else {
-              this.predict();
-            }
+            this.tagged[tag.position] = false;
+            animation.slideOut(this.$refs.container.lastChild, {duration: 800, direction: tag.position});
+            setTimeout(() => {
+              this.images.pop();
+              if (this.images.length === 0) {
+                this.load();
+              } else {
+                this.predict();
+              }
+            }, 800);
           }, 500);
         }).catch(error => {
           alert(error);
@@ -162,7 +184,7 @@
                   tag.probability = prediction.probability;
                   tag.probabilityPercent = (prediction.probability * 100).toFixed(2);
                 }
-              })
+              });
             });
             this.busy = false;
           });
@@ -173,6 +195,7 @@
           images.all({type: "untagged", take: 10})
             .then(images => {
               this.images = images.reverse().map(this.mapImage);
+              setTimeout(this.centerImages, 50);
               this.predict();
             })
             .catch(() => {
@@ -185,40 +208,57 @@
         image.rot = mathHelper.randomInt(-5, 5);
         image.offsetX = mathHelper.randomInt(-30, 30);
         image.width = document.body.clientWidth * 0.75;
-        image.offsetY = 0; //mathHelper.randomInt(-15, 15) + (document.body.clientHeight / 4.8);
+        image.offsetY = 0; //document.body.clientHeight / 2 - ((document.body.clientHeight * .70) / 2);
         return image;
       },
       centerImages() {
-        requestAnimationFrame(() => {
+        // A little unpredictable, when the children are rendered, this should be enough delay though.
+        setTimeout(() => {
           const imgs = this.$refs.container.children;
           for (let i = 0; i < imgs.length; i += 1) {
             const img = imgs.item(i);
             const index = img.getAttribute("data-index");
-            this.images[index].offsetY = (document.body.clientHeight / 2 - img.clientHeight / 2);
+            const randomOffset = mathHelper.randomInt(-40, 40);
+            this.images[index].offsetY = (document.body.clientHeight / 2 - img.clientHeight / 2) + randomOffset;
+          }
+        }, 300);
+      },
+      listen() {
+        this.manager = new Hammer.Manager(this.$refs.container, {
+          recognizers: [[Hammer.Swipe, {direction: Hammer.DIRECTION_HORIZONTAL}]],
+        });
+        const Swipe = new Hammer.Swipe();
+        this.manager.add(Swipe);
+
+        this.manager.on("swipe", (e) => {
+          const direction = e.offsetDirection;
+
+          if (direction === Hammer.DIRECTION_LEFT) {
+            this.tagImage(this.tags[0]);
+          } else if (direction === Hammer.DIRECTION_RIGHT) {
+            this.tagImage(this.tags[1]);
           }
         });
-      }
-    },
-    updated() {
-      this.centerImages();
+
+        window.addEventListener("resize", this.centerImages);
+
+        this.$socket.on(event.socket.broadcast.image.remove, image => {
+          for (let i = 0; i < this.images.length; i += 1) {
+            if (this.images[i].id === image.id) {
+              this.images.splice(i, 1);
+              break;
+            }
+          }
+        });
+
+        this.$socket.on(event.socket.broadcast.image.upload, image => this.mapImage(image));
+      },
     },
     mounted() {
       this.load();
-
-      window.addEventListener("resize", this.centerImages);
-
-      this.$socket.on(event.socket.broadcast.image.remove, image => {
-        for (let i = 0; i < this.images.length; i += 1) {
-          if (this.images[i].id === image.id) {
-            this.images.splice(i, 1);
-            break;
-          }
-        }
-      });
-
-      this.$socket.on(event.socket.broadcast.image.upload, image => this.mapImage(image));
+      this.listen();
     },
-  }
+  };
 </script>
 
 <style scoped>
