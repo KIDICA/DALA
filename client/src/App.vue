@@ -26,7 +26,7 @@
 
 <script>
   import cn from "./components/cala/Nav";
-  import "../src/assets/css/bootstrap/dist/css/bootstrap.min.css";
+  import "../public/style/bootstrap/dist/css/bootstrap.min.css";
   import routes from "./route/routes";
 
   export default {

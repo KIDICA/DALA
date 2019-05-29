@@ -4,7 +4,7 @@
   "private": true,
   "license": "Closed",
   "scripts": {
-    "dist": "cd ../client/ && npm install && npm run prebuild && npm run build",
+    "dist": "cd ../client/ && npm install && npm run build",
     "production": "cross-env NODE_ENV=production PORT=443 nodemon --exec node ./bin/www",
     "quickstart": "cd ../client && npm run build && cd ../server && npm run production",
     "start": "npm install && npm run dist && npm run production",

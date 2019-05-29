@@ -10,7 +10,7 @@ echo Building custom Bootstrap CSS
 echo ------------------------------------
 
 # Notice that a build of BS is only possible via git clone.
-cd ./src/assets/css/
+cd ./public/style/
 git clone https://github.com/twbs/bootstrap
 cd bootstrap
 git pull
@@ -24,4 +24,4 @@ cp ../_variables.scss scss/_variables.scss
 
 npm run css
 
-cd ../../../../
+cd ../../../

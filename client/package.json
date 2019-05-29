@@ -4,7 +4,7 @@
   "private": true,
   "license": "private",
   "scripts": {
-    "prebuild": "sh prebuild.sh",
+    "style": "sh style.sh",
     "serve": "vue-cli-service serve --modern",
     "build": "vue-cli-service build --modern",
     "lint": "vue-cli-service lint"
