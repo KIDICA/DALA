@@ -11,14 +11,13 @@ Vue.use(Vuex);
  */
 const store = new Vuex.Store({
   state: {
-    // Exchange of currently taken pictures.
-    imageBuffer: [],
     tags: [],
     allTags: [],
     voidTag: undefined,
     performance: {averagePrecision: 0},
     labeled: 0,
     imageCount: 0,
+    snapshots: [],
     hasIterations: false,
     count: {labeled: 0, unlabeled: 0},
     /**
@@ -61,8 +60,8 @@ const store = new Vuex.Store({
     setImageCount(state, imageCount) {
       state.imageCount = imageCount;
     },
-    addImage(state, image) {
-      state.imageBuffer.push(image);
+    addSnapshots(state, snapshot) {
+      state.snapshots.push(snapshot);
     },
     incrementImageCount(state, value = 1) {
       state.imageCount += value;
