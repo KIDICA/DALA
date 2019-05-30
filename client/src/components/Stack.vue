@@ -2,10 +2,19 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
 
-    <div ref="container" class="overflow-hidden text-center">
-      <div class="image" v-bind:data-index="index" v-for="(image, index) in images" :key="image.id" v-bind:style="{transform: 'rotate(' + image.rot + 'deg) translateX(' + image.offsetX + 'px) translateY(' + image.offsetY + 'px)' , zIndex: 3*index}">
+    <div class="row">
+      <div class="col">
+        <div ref="detection" class="alert alert-primary position-absolute text-center p-2 rounded-0 border-0" style="opacity: 0.7;top: 4.45em;left: 0%;right: 0%; z-index: 1000;">
+          <span v-if="!detected">I'm still not sure about this...</span>
+          <span v-if="detected">I think it is a {{detection.name}}! {{detection.probabilityPercent}}%</span>
+        </div>
+      </div>
+    </div>
+
+    <div ref="container" class="overflow-hidden text-center image-container vcenter">
+      <div class="image" v-bind:data-index="index" v-for="(image, index) in images" :key="image.id" v-bind:style="{transform: 'rotate(' + image.rot + 'deg) translateX(' + image.offsetX + 'px)' , zIndex: 3*index}">
         <img v-bind:src="image.thumbnailUrl" class="img-thumbnail" v-bind:style="{zIndex: 3*index+1}"/>
-        <button @click="destroyImage(image)" class="btn position-absolute" v-bind:style="{right: image.width*.12 + 'px', zIndex: 3*index+2}">
+        <button @click="destroyImage(image)" class="btn position-absolute" style="right: 12%;" v-bind:style="{zIndex: 3*index+2}">
           <font-awesome icon="times" class="display-4 text-primary"></font-awesome>
         </button>
       </div>
@@ -14,8 +23,15 @@
     <cala-toolbar v-if="tags.length>0">
       <slot>
         <div class="row">
+          <div class="col">
+            <div class="alert alert-primary position-absolute p-2 rounded-0 border-0" style="opacity: 0.7;bottom: 0em;left: 0%;right: 0%; margin-bottom: 0.5em;">
+              What is it?
+            </div>
+          </div>
+        </div>
+        <div class="row">
           <div class="float-left col">
-            <div class="progress left bg-transparent">
+            <div class="progress left bg-transparent" v-if="renderProgress">
               <div v-bind:style="{ width: (tags[0].probabilityPercent) + '%'}" class="progress-bar bg-success" role="progressbar" ref="left" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
                 <span class="text-dark pl-2 pr-2">{{tags[0].probabilityPercent}}%</span>
               </div>
@@ -33,7 +49,7 @@
           </div>
 
           <div class="col">
-            <div class="progress right bg-transparent" style="direction: rtl">
+            <div class="progress right bg-transparent" style="direction: rtl" v-if="renderProgress">
               <div v-bind:style="{ width: (tags[1].probabilityPercent) + '%'}" ref="right" class="progress-bar bg-primary" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
                 <span class=" pl-2 pr-2 text-white" v-if="tags[1].probability>0.3">{{tags[1].probabilityPercent}}%</span>
                 <span class=" pl-2 pr-2 text-dark" v-if="tags[1].probability<=0.3">{{tags[1].probabilityPercent}}%</span>
@@ -51,13 +67,13 @@
 </template>
 
 <script>
-  import images from "../../store/images";
+  import images from "../store/images";
   import Busy from "./Busy";
-  import mathHelper from "../../utils/math";
+  import mathHelper from "../utils/math";
   import Toolbar from "./Toolbar";
-  import event from "./../../config/events.json";
+  import event from "../config/events.json";
   import Hammer from "hammerjs";
-  import animation from "./../../utils/animation";
+  import animation from "../utils/animation";
 
   export default {
     name: "cala-stack",
@@ -71,7 +87,11 @@
           left: false,
           right: false,
         },
+        renderProgress: false,
         images: [],
+        detected: false,
+        minProbability: 0.5,
+        detection: {name: "", probability: 0},
         busy: true,
         resourceUrl: this.$base + "api/cala/upload",
       };
@@ -82,6 +102,9 @@
       },
       $route() {
         this.manager.destroy();
+      },
+      images() {
+        this.predict();
       },
     },
     computed: {
@@ -183,45 +206,34 @@
                 if (tag.id === prediction.tag.id) {
                   tag.probability = prediction.probability;
                   tag.probabilityPercent = (prediction.probability * 100).toFixed(2);
+                  if (tag.probability > this.detection.probability) {
+                    this.detection = tag;
+                  }
                 }
               });
             });
+            this.detected = this.detection.probability >= this.minProbability;
+            setTimeout(() => animation.pulse(this.$refs.detection), 500);
             this.busy = false;
           });
       },
       load() {
         this.busy = true;
-        requestAnimationFrame(() => {
-          images.all({type: "untagged", take: 10})
-            .then(images => {
-              this.images = images.reverse().map(this.mapImage);
-              setTimeout(this.centerImages, 50);
-              this.predict();
-            })
-            .catch(() => {
-              this.busy = false;
-            });
-        });
+        images.all({type: "untagged", take: 10})
+          .then(images => {
+            this.images = images.reverse().map(this.mapImage);
+          })
+          .catch(() => {
+            this.busy = false;
+          });
       },
       mapImage(image) {
         // Simulate random image stack.
-        image.rot = mathHelper.randomInt(-5, 5);
-        image.offsetX = mathHelper.randomInt(-30, 30);
-        image.width = document.body.clientWidth * 0.75;
-        image.offsetY = 0; //document.body.clientHeight / 2 - ((document.body.clientHeight * .70) / 2);
+        image.rot = mathHelper.randomInt(-4, 4);
+        image.offsetX = mathHelper.randomInt(-20, 20);
+        image.width = document.body.clientWidth * 0.7;
+        image.offsetY = document.body.clientHeight / 2 - ((document.body.clientHeight * .55) / 2);
         return image;
-      },
-      centerImages() {
-        // A little unpredictable, when the children are rendered, this should be enough delay though.
-        setTimeout(() => {
-          const imgs = this.$refs.container.children;
-          for (let i = 0; i < imgs.length; i += 1) {
-            const img = imgs.item(i);
-            const index = img.getAttribute("data-index");
-            const randomOffset = mathHelper.randomInt(-40, 40);
-            this.images[index].offsetY = (document.body.clientHeight / 2 - img.clientHeight / 2) + randomOffset;
-          }
-        }, 300);
       },
       listen() {
         this.manager = new Hammer.Manager(this.$refs.container, {
@@ -240,8 +252,6 @@
           }
         });
 
-        window.addEventListener("resize", this.centerImages);
-
         this.$socket.on(event.socket.broadcast.image.remove, image => {
           for (let i = 0; i < this.images.length; i += 1) {
             if (this.images[i].id === image.id) {
@@ -250,13 +260,12 @@
             }
           }
         });
-
-        this.$socket.on(event.socket.broadcast.image.upload, image => this.mapImage(image));
       },
     },
     mounted() {
       this.load();
       this.listen();
+      this.$store.watch(state => state.snapshots, image => this.mapImage(image));
     },
   };
 </script>
@@ -268,14 +277,15 @@
     right: 0;
     margin-left: auto;
     margin-right: auto;
-    height: 60%;
+    width: 85%;
+    max-height: 65%;
   }
 
   .image img {
     box-shadow: 0px 1px 5px 1px rgb(182, 182, 182);
     border-radius: 2px;
-    height: 100%;
-    width: auto;
+    height: auto;
+    width: 80%;
   }
 
   .btn.tag {
@@ -312,5 +322,11 @@
 
   .progress-bar span {
     min-width: 5rem;
+  }
+
+  .vcenter {
+    display: flex;
+    align-items: center;
+    min-height: 95vh;
   }
 </style>

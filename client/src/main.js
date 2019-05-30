@@ -41,7 +41,7 @@ const options = {
   showLogLevel: true,
   showMethodName: true,
   separator: "|",
-  showConsoleColors: true
+  showConsoleColors: true,
 };
 
 Vue.use(VueLogger, options);
@@ -108,5 +108,5 @@ new Vue({
       this.$store.commit("incrementUnlabeledCount", -1);
       this.$store.commit("updateTagCounts", tagAndImage.tag);
     });
-  }
+  },
 }).$mount("#app");

@@ -4,9 +4,9 @@
 //import Cam from "../components/cala/Cam";
 //import Item from "../components/cala/Item";
 //import List from "../components/cala/ImageList";
-import Hub from "../components/cala/Hub";
-import Stack from "../components/cala/Stack";
-import Capture from "../components/cala/Capture";
+import Hub from "../components/Hub";
+import Stack from "../components/Stack";
+import Capture from "../components/Capture";
 
 /**
  * {VueRouter} routes, with additional information used for the page layout or navigation bar generation.

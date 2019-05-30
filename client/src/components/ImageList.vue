@@ -87,10 +87,10 @@
 
 <script>
   import cb from "./Busy";
-  import imageStore from "../../store/images";
-  import event from "./../../config/events.json";
+  import imageStore from "../store/images";
+  import event from "../config/events.json";
   import * as moment from "moment";
-  import animation from "./../../utils/animation";
+  import animation from "../utils/animation";
 
   export default {
     name: "cala-imagelist",
@@ -257,7 +257,10 @@
         this.images = [];
         imageStore.all(this.pagination)
           .then(images => {
-            images.reverse().forEach(image => this.mapImage(image).then(this.pushImage));
+            images.forEach((image, index) => {
+              image.index = index;
+              this.mapImage(image).then(this.pushImage);
+            });
             this.loaded = true;
             this.busy = false;
           });

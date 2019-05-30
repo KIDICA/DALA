@@ -109,7 +109,7 @@
 </script>
 
 <style>
-  @import "../../../node_modules/chartist/dist/chartist.min.css";
+  @import "../../node_modules/chartist/dist/chartist.min.css";
 
   .ct-series-a .ct-slice-donut {
     stroke: #ae0055;

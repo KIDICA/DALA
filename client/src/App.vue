@@ -25,7 +25,7 @@
 </template>
 
 <script>
-  import cn from "./components/cala/Nav";
+  import cn from "./components/Nav";
   import "../public/style/bootstrap/dist/css/bootstrap.min.css";
   import routes from "./route/routes";
 

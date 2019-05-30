@@ -31,7 +31,7 @@
   import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
   import Overlay from "./Overlay";
   import Busy from "./Busy";
-  import clientDb from "../../store/client";
+  import clientDb from "../store/client";
 
   /**
    * TODO: Move to static module and test.

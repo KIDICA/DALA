@@ -7,7 +7,7 @@
     </form>
 
     <video ref="cam" class="bg-light" autoplay="true" playsInline></video>
-    <audio style="display: none" ref="click" src="./sound/camera.mp3" ></audio>
+    <audio style="display: none" ref="click" src="./sound/camera.mp3"></audio>
 
     <cala-toolbar>
       <slot>
@@ -26,11 +26,11 @@
 </template>
 
 <script>
-  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from 'jslib-html5-camera-photo';
-  import imageHelper from "../../utils/image";
+  import CameraPhoto, {FACING_MODES, IMAGE_TYPES} from "jslib-html5-camera-photo";
+  import imageHelper from "../utils/image";
   import Toolbar from "./Toolbar";
   import Busy from "./Busy";
-  import event from "./../../config/events.json";
+  import event from "../config/events.json";
 
   export default {
     name: "cala-capture",
@@ -65,6 +65,8 @@
           .then(response => {
             const image = response.data;
             this.$socket.emit(event.socket.broadcast.image.upload, image);
+            this.$emit("snapshot", image);
+            this.$store.commit("addSnapshots", image);
             this.busy = false;
             setTimeout(() => this.$router.go(-1), 1500);
           })
@@ -76,7 +78,7 @@
       upload(file) {
         return new Promise((resolve, reject) => {
           const formData = new FormData(this.$refs.form);
-          formData.append('file', file, "file.jpg");
+          formData.append("file", file, "file.jpg");
 
           this.$http.post(this.resourceUrl, formData)
             .then(response => {
@@ -104,15 +106,15 @@
     beforeRouteLeave(to, from, next) {
       this.cameraPhoto.stopCamera()
         .then(() => {
-          this.$log.debug('Camera stopped');
+          this.$log.debug("Camera stopped");
           next();
         })
         .catch((error) => {
-          this.$log.error('No camera to stop:', error);
+          this.$log.error("No camera to stop:", error);
           next();
         });
     },
-  }
+  };
 </script>
 
 <style scoped>

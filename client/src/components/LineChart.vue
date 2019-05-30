@@ -88,7 +88,7 @@
 </script>
 
 <style>
-  @import "../../../node_modules/chartist/dist/chartist.min.css";
+  @import "../../node_modules/chartist/dist/chartist.min.css";
 
   .ct-series-a .ct-line, .ct-series-a .ct-point {
     stroke: #8ca528;
