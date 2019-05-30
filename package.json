@@ -1,0 +1,21 @@
+{
+  "name": "dala",
+  "version": "0.1.0",
+  "private": true,
+  "description": "You need to install node.js >= 10.x and create API keys at http://customvision.ai",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd server && npm start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KIDICA/CALA.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KIDICA/CALA/issues"
+  },
+  "homepage": "https://github.com/KIDICA/CALA#readme"
+}

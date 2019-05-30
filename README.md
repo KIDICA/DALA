@@ -1,4 +1,4 @@
-# CALA
+# DALA
 
 ## Getting Started
 
@@ -33,7 +33,7 @@ Now open the link in the terminal window provided.
 
 ##### Testing production locally
 
-If you can't use Android + Firefox you need to run Cala with SSL so the mobile device allows access to the camera.
+If you can't use Android + Firefox you need to run DALA with SSL so the mobile device allows access to the camera.
 Also, if you want to test SSL locally you need to generate a self-signed certificate which you can do by just running cert.sh:
 
 ```bash
