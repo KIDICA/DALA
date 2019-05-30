@@ -174,7 +174,7 @@
           }
         `).then(() => {
           this.tagged[tag.position] = true;
-          animation.pulse(this.$refs[tag.position + "Button"]);
+          animation.pulse(this.$refs[tag.position + "Button"], {duration: 2000});
 
           this.$socket.emit(event.socket.broadcast.image.tagged, {tag, image: this.topMostImage});
           setTimeout(() => {
@@ -236,6 +236,16 @@
         return image;
       },
       listen() {
+        this.$socket.on(event.socket.broadcast.image.remove, image => {
+          for (let i = 0; i < this.images.length; i += 1) {
+            if (this.images[i].id === image.id) {
+              this.images.splice(i, 1);
+              break;
+            }
+          }
+        });
+      },
+      touch() {
         this.manager = new Hammer.Manager(this.$refs.container, {
           recognizers: [[Hammer.Swipe, {direction: Hammer.DIRECTION_HORIZONTAL}]],
         });
@@ -251,19 +261,11 @@
             this.tagImage(this.tags[1]);
           }
         });
-
-        this.$socket.on(event.socket.broadcast.image.remove, image => {
-          for (let i = 0; i < this.images.length; i += 1) {
-            if (this.images[i].id === image.id) {
-              this.images.splice(i, 1);
-              break;
-            }
-          }
-        });
       },
     },
     mounted() {
       this.load();
+      this.touch();
       this.listen();
       this.$store.watch(state => state.snapshots, image => this.mapImage(image));
     },

@@ -8,8 +8,8 @@ export default {
   /**
    * @param {String} selector
    */
-  pulse(selector) {
-    anime({
+  pulse(selector, options = {}) {
+    let config = Object.assign({
       targets: selector,
       scale: 1.2,
       duration: 150,
@@ -24,7 +24,8 @@ export default {
           autoplay: true,
         });
       },
-    });
+    }, options);
+    anime(config);
   },
   /**
    * @param {String|HTMLElement|ChildNode} selector

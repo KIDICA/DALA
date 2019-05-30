@@ -4,8 +4,8 @@
  * Module dependencies.
  */
 
-const app = require('../app');
-const debug = require('debug')('vision:server');
+const app = require("../app");
+const debug = require("debug")("vision:server");
 const config = require("../config/config.json");
 const path = require("path");
 const fs = require("fs");
@@ -14,8 +14,8 @@ const logger = require("../utils/logger");
 /**
  * Get port from environment and store in Express.
  */
-const PORT = normalizePort(process.env.PORT || '3000');
-app.set('port', PORT);
+const PORT = normalizePort(process.env.PORT || "3000");
+app.set("port", PORT);
 
 let server;
 
@@ -24,15 +24,15 @@ if (PORT === 443) {
   const pathKey = path.join(__dirname, "/../", config.ssl.key);
 
   if (!fs.existsSync(pathCert)) {
-    throw new Error(`Certificate file missing ${pathCert}`)
+    throw new Error(`Certificate file missing ${pathCert}`);
   }
   if (!fs.existsSync(pathKey)) {
-    throw new Error(`Certificate file missing ${pathKey}`)
+    throw new Error(`Certificate file missing ${pathKey}`);
   }
 
   server = require("https").createServer({
     key: fs.readFileSync(pathKey),
-    cert: fs.readFileSync(pathCert)
+    cert: fs.readFileSync(pathCert),
   }, app);
 } else {
   server = require("http").createServer(app);
@@ -66,12 +66,17 @@ io.on("connection", socket => {
     socket.emit(event.socket.broadcast.image.tagged, tagAndImage);
   });
 
+  socket.on(event.socket.broadcast.image.unlabel, image => {
+    socket.broadcast.emit(event.socket.broadcast.image.unlabel, image);
+    socket.emit(event.socket.broadcast.image.unlabel, image);
+  });
+
   socket.on(event.socket.broadcast.image.remove, image => {
     socket.broadcast.emit(event.socket.broadcast.image.remove, image);
     socket.emit(event.socket.broadcast.image.remove, image);
   });
 
-  socket.on('disconnect', () => socketClients -= 1);
+  socket.on("disconnect", () => socketClients -= 1);
 });
 
 /**
@@ -79,8 +84,8 @@ io.on("connection", socket => {
  */
 
 server.listen(PORT);
-server.on('error', onError);
-server.on('listening', onListening);
+server.on("error", onError);
+server.on("listening", onListening);
 
 /**
  * Normalize a port into a number, string, or false.
@@ -107,22 +112,22 @@ function normalizePort(val) {
  */
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
+  if (error.syscall !== "listen") {
     throw error;
   }
 
-  const bind = typeof PORT === 'string'
-    ? 'Pipe ' + PORT
-    : 'Port ' + PORT;
+  const bind = typeof PORT === "string"
+    ? "Pipe " + PORT
+    : "Port " + PORT;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
       process.exit(1);
       break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
       process.exit(1);
       break;
     default:
@@ -136,8 +141,8 @@ function onError(error) {
 
 function onListening() {
   const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  const bind = typeof addr === "string"
+    ? "pipe " + addr
+    : "port " + addr.port;
+  debug("Listening on " + bind);
 }
