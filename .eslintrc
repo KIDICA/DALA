@@ -1,0 +1,10 @@
+{
+  "extends": "standard",
+  "parserOptions": {
+    "ecmaVersion": 6
+  },
+  "rules": {
+    "quotes": ["error", "double"],
+    "brace-style": ["error", "1tbs", { "allowSingleLine": false }]
+  }
+}
