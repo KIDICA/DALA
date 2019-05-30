@@ -89,6 +89,13 @@ new Vue({
     this.$store.dispatch("queryHasIterations");
     this.$store.dispatch("queryPerformance");
 
+    this.$socket.on(event.socket.broadcast.image.unlabel, image => {
+      if (image.tags) {
+        this.$store.commit("decrementTagsCount", image.tags);
+      }
+      this.$store.commit("incrementUnlabeledCount");
+    });
+
     this.$socket.on(event.socket.broadcast.image.upload, () => {
       this.$store.commit("incrementImageCount");
       this.$store.commit("incrementUnlabeledCount");
@@ -106,7 +113,11 @@ new Vue({
     this.$socket.on(event.socket.broadcast.image.tagged, tagAndImage => {
       this.$store.commit("incrementLabeledCount");
       this.$store.commit("incrementUnlabeledCount", -1);
-      this.$store.commit("updateTagCounts", tagAndImage.tag);
+      this.$store.commit("updateTagCounts", tagAndImage);
+      // Any previous tag
+      if (tagAndImage.image.tags) {
+        this.$store.commit("decrementTagsCount", tagAndImage.image.tags);
+      }
     });
   },
 }).$mount("#app");

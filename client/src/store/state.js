@@ -12,6 +12,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     tags: [],
+    taggedInThisSession: {},
     allTags: [],
     voidTag: undefined,
     performance: {averagePrecision: 0},
@@ -69,19 +70,20 @@ const store = new Vuex.Store({
     incrementUnlabeledCount(state, value = 1) {
       state.count.unlabeled += value;
     },
+    decrementTagsCount(state, tags) {
+      tags.forEach(decTag => {
+        state.tags.filter(tag => tag.id === decTag.id)[0].imageCount -= 1;
+      })
+    },
     incrementLabeledCount(state, value = 1) {
       state.count.labeled += value;
     },
-    updateTagCounts(state, tagUpdate) {
-      state.tags.forEach(tag => {
-        if (tag.id === tagUpdate.tagId) {
-          tag.imageCount = (tag.imageCount || 0) + 1;
-        }
-      })
+    updateTagCounts(state, imageAndTag) {
+      state.tags.filter(tag => tag.id === imageAndTag.tag.id)[0].imageCount += 1;
     },
     updatePerformance(state, performance) {
       state.performance.averagePrecision = performance.averagePrecision;
-    }
+    },
   },
   actions: {
     queryHasIterations({commit}) {
@@ -114,9 +116,9 @@ const store = new Vuex.Store({
         .then(data => {
           commit("updateCount", {
             labeled: data.tagCounts.tagged,
-            unlabeled: data.tagCounts.untagged
+            unlabeled: data.tagCounts.untagged,
           });
-          commit("setImageCount", data.tagCounts.tagged + data.tagCounts.untagged)
+          commit("setImageCount", data.tagCounts.tagged + data.tagCounts.untagged);
         });
     },
     queryTags({commit}) {
@@ -131,8 +133,8 @@ const store = new Vuex.Store({
       `).then(response => {
         commit("updateTags", response.tags);
       });
-    }
-  }
+    },
+  },
 });
 
 export default store;

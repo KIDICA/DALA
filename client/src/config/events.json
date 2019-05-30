@@ -1,14 +1,15 @@
 {
   "socket": {
-    "broadcast": {
+    "broadcast":   {
       "clientCount": "client-count",
-      "image": {
-        "remove": "broadcast-image-delete",
-        "upload": "broadcast-image-upload",
-        "tagged": "broadcast-image-tagged"
+      "image":       {
+        "remove":  "broadcast-image-delete",
+        "upload":  "broadcast-image-upload",
+        "tagged":  "broadcast-image-tagged",
+        "unlabel": "broadcast-image-unlabel"
       }
     },
-    "image": {
+    "image":       {
       "upload": "image-upload",
       "tagged": "tag-image",
       "remove": "image-delete"

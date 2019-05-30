@@ -171,7 +171,9 @@
             }`)
           .then(result => {
             if (result.unlabel) {
+              this.$socket.emit(event.socket.broadcast.image.unlabel, image);
               image.tagSet = {};
+              image.tags = null;
               this.$set(this.images, index, image);
             }
           });
@@ -196,6 +198,7 @@
             image.tagSet[tag.id] = true;
             this.$set(this.images, index, image);
             this.images[index].busy = true;
+            this.images[index].tags = [tag];
             this.busy = false;
             animation.pulse($event.target);
           })
