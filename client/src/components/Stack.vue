@@ -67,7 +67,7 @@
 </template>
 
 <script>
-  import images from "../store/images";
+  import imageStore from "../store/images";
   import Busy from "./Busy";
   import mathHelper from "../utils/math";
   import Toolbar from "./Toolbar";
@@ -141,7 +141,7 @@
           return;
         }
         this.busy = true;
-        images.destroy(image)
+        imageStore.destroy(image)
           .then(() => {
             this.$socket.emit(event.socket.broadcast.image.remove, image);
             setTimeout(() => this.images.splice(this.images.indexOf(image), 1), 700);
@@ -199,7 +199,7 @@
           return;
         }
 
-        images.predictUrl(this.topMostImage.imageUrl)
+        imageStore.predictUrl(this.topMostImage.imageUrl)
           .then(predictions => {
             this.tags.forEach(tag => {
               predictions.forEach(prediction => {
@@ -214,14 +214,15 @@
             });
             this.detected = this.detection.probability >= this.minProbability;
             setTimeout(() => animation.pulse(this.$refs.detection), 500);
-            this.busy = false;
           });
       },
       load() {
         this.busy = true;
-        images.all({type: "untagged", take: 10})
+
+        imageStore.all({type: "untagged", take: 10})
           .then(images => {
             this.images = images.reverse().map(this.mapImage);
+            this.busy = false;
           })
           .catch(() => {
             this.busy = false;
@@ -233,6 +234,7 @@
         image.offsetX = mathHelper.randomInt(-20, 20);
         image.width = document.body.clientWidth * 0.7;
         image.offsetY = document.body.clientHeight / 2 - ((document.body.clientHeight * .55) / 2);
+
         return image;
       },
       listen() {
