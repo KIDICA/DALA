@@ -50,7 +50,7 @@
         });
 
         // IE/Edge don't support most animations
-        if (browser.isEdge()) {
+        if (!browser.isEdge()) {
           this.chart.on("draw", (data) => {
             if (data.type === "slice") {
               // Get the total path length in order to use for dash array animation
@@ -89,10 +89,6 @@
               data.element.animate(animationDefinition, false);
             }
           });
-          // update
-          this.chart.on("created", () => {
-            this.threadId = setInterval(() => this.chart.update(), 10000);
-          });
         }
       },
     },
@@ -102,9 +98,6 @@
     destroyed() {
       if (this.chart) {
         this.chart.detach();
-      }
-      if (this.threadId) {
-        clearInterval(this.threadId);
       }
     },
   };
