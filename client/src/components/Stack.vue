@@ -4,11 +4,17 @@
 
     <div class="row">
       <div class="col">
-        <div ref="detection" class="alert alert-primary position-absolute text-center p-2 rounded-0 border-0" style="opacity: 0.7;top: 4.45em;left: 0%;right: 0%; z-index: 1000;">
+        <div ref="detection" v-show="predicted" class="alert alert-primary position-absolute text-center p-2 rounded-0 border-0" style="opacity: 0.7;top: 4.45em;left: 0%;right: 0%; z-index: 1000;">
           <span v-if="!detected">I'm still not sure about this...</span>
           <span v-if="detected">I think it is a {{detection.name}}! {{detection.probabilityPercent}}%</span>
         </div>
       </div>
+    </div>
+
+    <div v-if="!(busy || hasImages)" class="overflow-hidden text-center image-container vcenter">
+      <span style="margin-left: auto; margin-right: auto" class="display-4 text-primary">
+        No data yet.
+      </span>
     </div>
 
     <div ref="container" class="overflow-hidden text-center image-container vcenter">
@@ -24,7 +30,7 @@
       <slot>
         <div class="row">
           <div class="col">
-            <div class="alert alert-primary position-absolute p-2 rounded-0 border-0" style="opacity: 0.7;bottom: 0em;left: 0%;right: 0%; margin-bottom: 0.5em;">
+            <div v-show="predicted" class="alert alert-primary position-absolute p-2 rounded-0 border-0" style="opacity: 0.7;bottom: 0em;left: 0%;right: 0%; margin-bottom: 0.5em;">
               What is it?
             </div>
           </div>
@@ -87,19 +93,17 @@
           left: false,
           right: false,
         },
+        predicted: false,
         renderProgress: false,
         images: [],
+        busyVal: true,
         detected: false,
         minProbability: 0.5,
         detection: {name: "", probability: 0},
-        busy: true,
         resourceUrl: this.$base + "api/cala/upload",
       };
     },
     watch: {
-      busy(val) {
-        this.$refs.busy.work = val;
-      },
       $route() {
         this.manager.destroy();
       },
@@ -108,8 +112,19 @@
       },
     },
     computed: {
-      hasImages: function() {
-        return this.images.length > 0;
+      hasImages: {
+        get() {
+          return this.images.length > 0;
+        },
+      },
+      busy: {
+        set(val) {
+          this.busyVal = val;
+          this.$refs.busy.work = val;
+        },
+        get() {
+          return this.busyVal;
+        },
       },
       topMostImage() {
         return this.images[this.images.length - 1];
@@ -195,6 +210,7 @@
         });
       },
       predict() {
+        this.predicted = false;
         if (this.images.length === 0) {
           return;
         }
@@ -213,12 +229,12 @@
               });
             });
             this.detected = this.detection.probability >= this.minProbability;
+            this.predicted = true;
             setTimeout(() => animation.pulse(this.$refs.detection), 500);
           });
       },
       load() {
         this.busy = true;
-
         imageStore.all({type: "untagged", take: 10})
           .then(images => {
             this.images = images.reverse().map(this.mapImage);

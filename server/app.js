@@ -34,6 +34,9 @@ if (!fs.existsSync("public/uploads")) {
 }
 
 if (app.get("env") === "development") {
+  const cors = require("cors");
+  app.use(cors());
+
   const morgan = require("morgan");
   app.use(morgan("dev"));
 }

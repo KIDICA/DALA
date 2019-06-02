@@ -3,11 +3,10 @@
     <cala-busy ref="busy"></cala-busy>
     <div class="card border-0 rounded-0 pl-3 pr-3 pt-2 pb-2" style="background: #E9E7E5">
       <div class="card-body pt-1 pb-1 pl-0 pr-0">
-        <div v-if="!hasImages" class="text-center row m-2">
-          <div class="col">
-            <span class="mr-2">No data loaded yet.</span>
-            <font-awesome :icon="'sync-alt'"></font-awesome>
-          </div>
+        <div v-if="!(busy || hasImages)" class="overflow-hidden text-center image-container vcenter">
+          <span style="margin-left: auto; margin-right: auto" class="display-4 text-primary">
+            No data yet.
+          </span>
         </div>
 
         <template v-if="hasImages">
