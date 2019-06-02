@@ -1,4 +1,7 @@
-*
+./*
+.well-known/acme-challenge/
 !.gitignore
 !README.md
 !cert.sh
+!zerossl-confirm.sh
+!.well-known/acme-challenge/.gitignore
