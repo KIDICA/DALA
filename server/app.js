@@ -7,7 +7,7 @@ const createError = require("http-errors");
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
+const compression = require("compression");
 const timeout = require("connect-timeout");
 const fs = require("fs");
 const logger = require("./utils/logger");
@@ -44,7 +44,7 @@ app.use(function haltOnTimeout(req, res, next) {
     next();
   }
 });
-app.use(cors());
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
@@ -62,9 +62,9 @@ app.use("/api/cala", apiCala);
 app.use("/api/dashboard", apiDashboard);
 
 // Only the upload folder is served statically beside the index.html
-app.get('/uploads/*', (req, res) => res.sendFile(__dirname + "/public" + req.url));
+app.get("/uploads/*", (req, res) => res.sendFile(__dirname + "/public" + req.url));
 // All other static resource are compile by vue when they are included/required in components.
-app.get('*', (req, res) => res.sendFile(__dirname + "/public/index.html"));
+app.get("*", (req, res) => res.sendFile(__dirname + "/public/index.html"));
 
 // |========================================================|
 // | Error handling                                         |
