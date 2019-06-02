@@ -2,7 +2,7 @@
   <div>
     <cala-busy ref="busy"></cala-busy>
     <div class="card border-0 rounded-0 pl-3 pr-3 pt-2 pb-2" style="background: #E9E7E5">
-      <div class="card-body pt-1 pb-1">
+      <div class="card-body pt-1 pb-1 pl-0 pr-0">
         <div v-if="!hasImages" class="text-center row m-2">
           <div class="col">
             <span class="mr-2">No data loaded yet.</span>
@@ -26,7 +26,7 @@
             </div>
           </div>
 
-          <div v-for="(image, index) in images" :key="image.id" class="item row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
+          <div v-for="(image, index) in images" :key="image.id" class="ml-1 mr-1 item row text-center pb-3 mb-3 border-bottom border-success" v-bind:class="image.className">
             <!-- This arrangement is not particularly elegant and stems from the reasons that by design one tag is left and one right -->
 
             <div class="col pr-0">
@@ -38,9 +38,9 @@
                   </div>
                 </div>
 
-                <button @click="tagImage(image, tags[0], index, $event)" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[0].id], 'btn-outline-primary': !image.tagSet[tags[0].id]}" style="right: 0;">
+                <button @click="tagImage(image, tags[0], index, $event)" v-bind:disabled="image.tagSet[tags[0].id]" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[0].id], 'btn-outline-primary': !image.tagSet[tags[0].id]}" style="right: 0;">
                   {{tags[0].name}}
-                  <font-awesome v-if="image.tagSet[tags[0].id]" icon="check"></font-awesome>
+                  <font-awesome class="d-none d-lg-inline" v-if="image.tagSet[tags[0].id]" icon="check"></font-awesome>
                 </button>
 
                 <button class="btn p-0" @click="unlabel(image, index)" style="position:absolute; bottom: 0; right: 1em;">
@@ -64,9 +64,9 @@
                   </div>
                 </div>
 
-                <button @click="tagImage(image, tags[1], index, $event)" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[1].id], 'btn-outline-primary': !image.tagSet[tags[1].id]}" style="left: 0;">
+                <button @click="tagImage(image, tags[1], index, $event)" v-bind:disabled="image.tagSet[tags[1].id]" class="btn btn-lg font-weight-bolder btn-tag" v-bind:class="{'btn-secondary': image.tagSet[tags[1].id], 'btn-outline-primary': !image.tagSet[tags[1].id]}" style="left: 0;">
                   {{tags[1].name}}
-                  <font-awesome v-if="image.tagSet[tags[1].id]" icon="check"></font-awesome>
+                  <font-awesome class="d-none d-lg-inline" v-if="image.tagSet[tags[1].id]" icon="check"></font-awesome>
                 </button>
 
                 <button class="btn p-0" @click="deleteImage(image, index)" style="position: absolute; bottom:0; left: 1em;">
@@ -78,7 +78,7 @@
             </div>
           </div>
 
-          <button v-if="pagination.skip < imageCount" class="btn btn-block btn-primary" @click="more">More</button>
+          <button v-if="pagination.skip < imageCount" class="btn btn-block btn-primary pt-2 pb-2" @click="more">More</button>
         </template>
       </div>
     </div>
@@ -371,5 +371,11 @@
 
   .progress.right {
     direction: ltr;
+  }
+
+  /* Retain the color also when disabled here. */
+  .btn-secondary[disabled] {
+    background-color: #6c757d !important;
+    opacity: 1.0;
   }
 </style>
