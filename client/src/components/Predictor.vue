@@ -65,7 +65,7 @@
               <div class="card-body p-0 h-100">
                 <div class="row">
                   <div class="col">
-                    <img ref="image" class="h-100 shadow-sm mb-3 img-thumbnail shadow-sm cover-image" v-bind:src="cover"/>
+                    <img ref="image" src="<%= BASE_URL %>uploads/predict.jpg" class="h-100 shadow-sm mb-3 img-thumbnail shadow-sm cover-image" v-bind:src="cover"/>
                   </div>
                 </div>
                 <div class="row mt-3">
@@ -90,7 +90,7 @@
             <cala-line-chart ref="chart"></cala-line-chart>
 
             <div class="position-absolute bg-white rounded-left rounded-right text-center"
-                 style="bottom: 0; left: 40%; border-top-left-radius: .8em !important;border-top-right-radius: .8em !important; opacity: .9">
+                 style="bottom: 0; left: 40%; border-top-left-radius: .8em !important;border-top-right-radius: .8em !important; opacity: 0.9">
               <ul class="list-inline m-0 p-1">
                 <li class="list-inline-item mr-2 ml-2 pb-0" v-for="tag in tags" :key="tag.id">
                   <span class="badge p-2 legend mr-3" style="border-radius: 2em" v-bind:class="tag.className">&nbsp;</span>
@@ -278,6 +278,7 @@
     background-position: center;
     background-repeat: no-repeat;
     height: 48%;
+    image-rendering: optimizeQuality;
   }
 
   .cover-image {

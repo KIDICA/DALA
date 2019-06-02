@@ -90,4 +90,3 @@ cognitive-services-node-sdk-samples
 
 config.json
 public/**
-!public/uploads/empty
