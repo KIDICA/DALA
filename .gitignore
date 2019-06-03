@@ -3,3 +3,5 @@
 cognitive-services-node-sdk-samples/
 client/public/style/bootstrap
 !client/public/style/bootstrap/dist/css
+server/config/ssl/key.pem
+server/config/ssl/cert.pem
