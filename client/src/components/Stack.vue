@@ -96,7 +96,7 @@
         predicted: false,
         renderProgress: false,
         images: [],
-        busyVal: true,
+        busyVal: false,
         detected: false,
         minProbability: 0.5,
         detection: {name: "", probability: 0},
@@ -104,9 +104,6 @@
       };
     },
     watch: {
-      $route() {
-        this.manager.destroy();
-      },
       images() {
         this.predict();
       },
@@ -231,6 +228,10 @@
             this.detected = this.detection.probability >= this.minProbability;
             this.predicted = true;
             setTimeout(() => animation.pulse(this.$refs.detection), 500);
+          })
+          .catch(error => {
+            this.$log.error(error);
+            this.busy = false;
           });
       },
       load() {
@@ -286,6 +287,9 @@
       this.touch();
       this.listen();
       this.$store.watch(state => state.snapshots, image => this.mapImage(image));
+    },
+    beforeDestroy() {
+      this.manager.destroy();
     },
   };
 </script>

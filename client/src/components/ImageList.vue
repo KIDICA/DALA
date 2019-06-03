@@ -131,11 +131,6 @@
           this.flushBuffer();
         }
       },
-      $route() {
-        if (this.threadId) {
-          clearInterval(this.threadId);
-        }
-      },
     },
     computed: {
       hasImages: function() {
@@ -324,6 +319,11 @@
       this.threadId = setInterval(() => {
         this.computeLastUpdate();
       }, 5000);
+    },
+    beforeDestroy() {
+      if (this.threadId) {
+        clearInterval(this.threadId);
+      }
     },
   };
 </script>
