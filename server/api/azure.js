@@ -128,7 +128,7 @@ Azure.prototype.init = function(projectId) {
 /**
  * The path to the image relative to the root folder.
  *
- * @param {Buffer} file File name.
+ * @param {Buffer|Blob} file File name.
  * @returns {Promise<ImagePrediction>}
  */
 Azure.prototype.predict = function(file) {

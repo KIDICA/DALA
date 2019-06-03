@@ -7,6 +7,7 @@
 import Hub from "../components/Hub";
 import Stack from "../components/Stack";
 import Capture from "../components/Capture";
+import Watcher from "../components/Watcher";
 
 /**
  * {VueRouter} routes, with additional information used for the page layout or navigation bar generation.
@@ -33,6 +34,20 @@ const routes = [
     show: false,
     path: '/capture',
     component: Capture,
+    nav: {
+      showTitle: false,
+      showLine: false,
+    },
+    layout: {
+      showButtons: false,
+      showSubtitle: false,
+    }
+  },
+
+  {
+    show: false,
+    path: '/watcher',
+    component: Watcher,
     nav: {
       showTitle: false,
       showLine: false,

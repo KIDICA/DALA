@@ -20,6 +20,7 @@ import {
   faTimes,
   faCheck,
   faPause,
+  faPlay,
   faSyncAlt,
   faCloudUploadAlt,
   faTimesCircle,
@@ -31,7 +32,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 // |========================================================|
 
 // Include them one by one to keep the binary small.
-library.add(faChartArea, faTimesCircle, faCamera, faUpload, faBrain, faTrash, faTimes, faBatteryQuarter, faCheck, faPause, faSyncAlt, faCloudUploadAlt);
+library.add(faPlay, faChartArea, faTimesCircle, faCamera, faUpload, faBrain, faTrash, faTimes, faBatteryQuarter, faCheck, faPause, faSyncAlt, faCloudUploadAlt);
 Vue.component("font-awesome", FontAwesomeIcon);
 
 const options = {

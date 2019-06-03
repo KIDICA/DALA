@@ -6,10 +6,35 @@ const fs = require("fs");
 const upload = multer({dest: "uploads/"});
 const logger = require("./../../utils/logger");
 
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res) {
   logger.error(err);
   res.status(500).send({error: err});
 }
+
+router.post("/predict", upload.single("file"), function (req, res) {
+  try {
+    const file = req.file;
+    const originFile = path.join(__dirname, "../../uploads", file.filename);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+
+    if (ext === ".jpg") {
+      fs.readFile(originFile, (err, data) => {
+        if (err) {
+          return errorHandler(err, res);
+        }
+        req.api.predict(data)
+          .then(result => {
+            setTimeout(() => {
+              fs.unlink(originFile, () => {/* ignore, delayed delete via OS is interpreted as error. */});
+              res.send(result.predictions);
+            }, 100);
+          }).catch(error => errorHandler(error, res));
+      });
+    }
+  } catch (e) {
+    errorHandler(e.message, res);
+  }
+});
 
 /** Submits the temp file to azure and then deletes it. */
 router.post("/upload", upload.single("file"), function (req, res, next) {
@@ -23,7 +48,7 @@ router.post("/upload", upload.single("file"), function (req, res, next) {
     if (ext === ".png" || ext === ".jpg") {
       fs.rename(originFile, targetPath, err => {
         if (err) {
-          return handleError(err, res);
+          return errorHandler(err, res);
         }
 
         fs.unlink(originFile, err => {
