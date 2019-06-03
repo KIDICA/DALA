@@ -171,9 +171,6 @@
        * @param {{id: String, position: String}} tag
        */
       tagImage(tag) {
-        if (this.busy) {
-          return;
-        }
         this.busy = true;
         this.tagged[tag.position] = true;
 
@@ -185,6 +182,7 @@
             }
           }
         `).then(() => {
+          this.busy = false;
           this.tagged[tag.position] = true;
           animation.pulse(this.$refs[tag.position + "Button"], {duration: 2000});
 
