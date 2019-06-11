@@ -172,7 +172,7 @@ Azure.prototype.predictUrl = function(imageUrl) {
     enqueue((trainer, predictor) => {
       // TODO: Ask MS whats the difference between quicktest and classify.
       predictor.classifyImageUrlWithNoStore(this.project.id, this.lastPublish(), imageUrl)
-        //trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
+      //trainer.quickTestImageUrl(this.project.id, imageUrl, {iterationId: this.iterations[this.iterations.length - 1].id})
         .then(results => {
           logger.success({prefix: "azure", suffix: "(api-predictUrl)", message: imageUrl});
           resolve(results);
@@ -655,10 +655,10 @@ Azure.prototype.getPredictionHistory = function(file) {
         let count = its.length;
 
         its.forEach(it => {
-          enqueue(trainer => {
+          enqueue((trainer, predictor) => {
             // Prevents API blocking due to DoS
-            trainer.quickTestImage(this.project.id, file, {iterationId: it.id})
-              //predictor.classifyImageWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].createPublishName, file)
+            //trainer.quickTestImage(this.project.id, file, {iterationId: it.id})
+            predictor.classifyImageWithNoStore(this.project.id, this.iterations[this.iterations.length - 1].publishName, file)
               .then(prediction => {
                 const correctIndex = retainOrder.indexOf(prediction.iteration);
                 prediction.index = correctIndex;
