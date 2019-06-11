@@ -6,32 +6,37 @@
 
 You need to install node.js >= 10.x and create API keys at http://customvision.ai
 
-### Installing
+### Installation
 
 ```bash
-git clone https://github.com/KIDICA/CALA.git
+git clone https://github.com/KIDICA/DALA.git
 ```
 
 #### Development
 
-Development without SSL connection:
+To get proper debugging message during development and get automatic recompilation on code changes
+you need to start the server and client application in two separate terminals.
+
+Terminal 1
 
 ```bash
 # Put your customvision.ai and futher information in this JSON file.
 cp ./server/config/config.default.json ./server/config/config.json
 
-# Terminal 1
 cd ./server
 npm run server
+```
 
-# Terminal 2
+Terminal 2
+
+```bash
 cd ./client
 npm run serve
 ```
 
-Now open the link in the terminal window provided.
+Now open the link in the Terminal 2 window provided.
 
-#### Testing production locally
+#### Testing production locally with SSL
 
 If you can't use Android + Firefox you need to run DALA with SSL so the mobile device allows access to the camera.
 Also, if you want to test SSL locally you need to generate a self-signed certificate which you can do by just running cert.sh:
@@ -63,7 +68,7 @@ Email Address []:
 
 ```
 
-Now run `npm start` from the root.
+Now run `npm start` from the root this will deploy the Vue app to `/server/public` when the start the server side node.js express app.
 
 #### Real Production
 
@@ -81,31 +86,34 @@ npm run client              | `cd ./client/npm run client`. Run the vue-cli clie
 
 # Project structure
 
-The application consists of two entirely separated apps contained in the `server` and `client` folder. 
+The application consists of two entirely separated apps contained in the `server` and `client` folder.
 
 1. Client:
     * Written in Vue.js 2.x and contained in the `client` folder.
     * This project uses an API to access the data and doesn't know anything specific about a server.
 1. Server:
-    * The server only provides an API which the Vue client application is run independently on.
-    * It serves for all applications only the ```public/index.html``` which is the compilation target for the Vue application entry-point.
+    * The server **only** provides an API which the Vue app consumes.
+    * It serves for all queries to the web-server only the `public/index.html` which is the compilation target for the Vue app entry-point.
     * Any further routing is done by the Vue-router.
-    * Only static files are served from the `/server/uploads` folder.
-    
-## Client-Server communication
+    * Additionally static files are served from the `/server/uploads` folder.
 
-1. The api contains two ```upload``` routes file upload and all other data is queried via GraphQL 
-which can be accessed from any Vue component via ```this.$query(...)```.
-    * In development mode an UI for testing/building GraphQL queries is provided via ```http://localhost:3000/graphql/v1```. This UI also allow the exploration that the server provides.
-1. If needed also REST queries can executed via ```this.$http.[method]``` which just holds an [axios](https://github.com/axios/axios) instance.
-1. An instance of socket.io is provided on the client which all Vue-components can access via ```this.$socket``` which allows a real time communication with the server, i.e. to push data to the clients.
+## Client <-> Server <-> Service communication
 
+1. The server api contains two `/*/uploads` routes for file uploads. Any other data is queried via GraphQL 
+which can be accessed from any Vue component via `this.$query("graphql query")`.
+    * In development mode an UI for testing/building GraphQL queries is provided via ```http://localhost:3000/graphql/v1```. This UI also allows the exploration of the data-model.
+1. If needed also REST queries can executed via `this.$http.[method]` which just holds an [axios](https://github.com/axios/axios) instance.
+1. An instance of socket.io is provided on the client which all Vue-components can access via `this.$socket.emit/on` which allows a real time communication with the server, i.e. to push data to the clients.
+1. Custom-Vision API:
+    * The `/server/config/config.json` file contains the API keys provided by Azure service. This service is hosting all taken images and providing the prediction services.
+ 
 # Deployment
 
 1. Setup only requires a environment with node.js >= 10.x.
-1. Copy the ```config.default.json``` to ```config.json``` and define the API keys and other config there.
+1. Also note: The production build must be served with a valid SSL certificate.
+1. Copy the ```config.default.json``` to ```config.json``` and insert the API keys which can be accessed in the Custom-Vision portal.
 1. Run `./start.sh`. 
 
 # License
 
-This project has a dual license. It's open-source but you're not allowed to use it commercially without a permission.
+This project has a dual license. It's open-source but you're not allowed to use it commercially without a permission. This license might change in the future.
