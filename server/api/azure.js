@@ -3,7 +3,7 @@ const util = require("util");
 const setTimeoutPromise = util.promisify(setTimeout);
 const logger = require("../utils/logger");
 
-const config = require("../config/config.json");
+const config = require("../config/config");
 
 const TrainingApi = require("@azure/cognitiveservices-customvision-training");
 const PredictionApiClient = require("@azure/cognitiveservices-customvision-prediction");

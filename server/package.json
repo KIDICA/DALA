@@ -7,7 +7,7 @@
     "dist": "cd ../client/ && npm install && npm run build",
     "production": "cross-env NODE_ENV=production PORT=443 nodemon --exec node ./bin/www",
     "quickstart": "cd ../client && npm run build && cd ../server && npm run production",
-    "start": "npm install && npm run dist && npm run production",
+    "start": "node ./bin/www",
     "client": "cd ../client/ && npm install && cross-env NODE_ENV=development npm run serve",
     "server": "npm install && cross-env NODE_ENV=development PORT=3000 nodemon --exec node ./bin/www"
   },

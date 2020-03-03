@@ -19,9 +19,18 @@ you need to start the server and client application in two separate terminals.
 
 Terminal 1
 
+Following environment variables need to be set before the server is launched.
+
+```
+TRAINING_KEY
+PREDICTION_KEY
+PREDICTION_RESOURCE_ID
+PROJECT_ID
+ENDPOINT
+PORT
+```
+
 ```bash
-# Put your customvision.ai and futher information in this JSON file.
-cp ./server/config/config.default.json ./server/config/config.json
 
 cd ./server
 npm run server
@@ -104,15 +113,14 @@ which can be accessed from any Vue component via `this.$query("graphql query")`.
     * In development mode an UI for testing/building GraphQL queries is provided via ```http://localhost:3000/graphql/v1```. This UI also allows the exploration of the data-model.
 1. If needed also REST queries can executed via `this.$http.[method]` which just holds an [axios](https://github.com/axios/axios) instance.
 1. An instance of socket.io is provided on the client which all Vue-components can access via `this.$socket.emit/on` which allows a real time communication with the server, i.e. to push data to the clients.
-1. Custom-Vision API:
-    * The `/server/config/config.json` file contains the API keys provided by Azure service. This service is hosting all taken images and providing the prediction services.
+1. Custom-Vision API: This service is hosting all taken images and providing the prediction services.
  
 # Deployment
 
 1. Setup only requires a environment with node.js >= 10.x.
-1. Also note: The production build must be served with a valid SSL certificate.
-1. Copy the ```config.default.json``` to ```config.json``` and insert the API keys which can be accessed in the Custom-Vision portal.
-1. Run `./start.sh`. 
+1. Also note: The production should be be served with a valid SSL certificate, otherwise mobile clients won't allow camera access.
+1. Set the above mentioned node.js environmental variables.
+1. Run `npm start`.
 
 # License
 
