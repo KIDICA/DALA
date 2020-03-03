@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KIDICA/CALA.git"
+    "url": "git+https://github.com/KIDICA/DALA.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/KIDICA/CALA/issues"
+    "url": "https://github.com/KIDICA/DALA/issues"
   },
-  "homepage": "https://github.com/KIDICA/CALA#readme"
+  "homepage": "https://github.com/KIDICA/DALA#readme"
 }
