@@ -29,7 +29,7 @@
     "nodemon": "^1.18.11",
     "save": "^2.3.3",
     "signale": "^1.4.0",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.4.0"
   },
   "devDependencies": {}
 }
